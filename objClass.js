@@ -1,6 +1,3 @@
-// I am going to try the class thing but instead of a ship I will have a monkey
-// it would be really cool to have a banana but for now I will just go with two monkeys
-
 class FunkyMonkey {
     constructor(gl, shaderProgram, objFileContents) {
         this.gl = gl;
@@ -26,27 +23,81 @@ class FunkyMonkey {
     CreateMonkeyPoints(objFileContents) {
         this.objData = SimpleObjParse(objFileContents);
         this.points = VerySimpleTriangleVertexExtraction(this.objData);
+        //// try to extract the normals and the texture coordinates from the obj file
         this.normals = EstimateNormalsFromTriangles(this.points);
 
-        this.shapeBufferID = this.gl.createBuffer();                                
-        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.shapeBufferID);                      
-        this.gl.bufferData(this.gl.ARRAY_BUFFER, flatten(this.points), this.gl.STATIC_DRAW); 
+        this.textureImage = null;
+        this.textureID = null;
+        this.texturePoints = [];
+        for (let i = 0; i < this.points.length; i++) {
+            this.texturePoints.push( vec2(-1,-1));
+        }
 
-        var posVar = this.gl.getAttribLocation(this.shaderProgram, "vPosition"); 
-        this.gl.vertexAttribPointer(posVar, 4, this.gl.FLOAT, false, 0, 0);     
-        this.gl.enableVertexAttribArray(posVar);
+        this.LoadDataOnGPU();
 
 
-        // set color/normals
-        this.colorBufferID = this.gl.createBuffer();                                  
-        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.colorBufferID);                       
-        this.gl.bufferData(this.gl.ARRAY_BUFFER, flatten(this.normals), this.gl.STATIC_DRAW); 
+        //set up lighting
+        this.SetMaterialProperties(vec4(1.0, 0.75, 0.25, 1.0), 100.0);
+        this.SetLightingProperties(vec4(0.25, 0.25, 0.25, 1.0),   // ambient, low-level
+                                   vec4(1.0, 1.0, 1.0, 1.0),   // diffuse, white
+                                   vec4(1.0, 1.0, 1.0, 1.0));  // specular, white
+
+        //this.shapeBufferID = this.gl.createBuffer();                                
+        //this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.shapeBufferID);                      
+        //this.gl.bufferData(this.gl.ARRAY_BUFFER, flatten(this.points), this.gl.STATIC_DRAW); 
+
+        // var posVar = this.gl.getAttribLocation(this.shaderProgram, "vPosition"); 
+        // this.gl.vertexAttribPointer(posVar, 4, this.gl.FLOAT, false, 0, 0);     
+        // this.gl.enableVertexAttribArray(posVar);
+
+
+        // // set color/normals
+        // this.colorBufferID = this.gl.createBuffer();                                  
+        // this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.colorBufferID);                       
+        // this.gl.bufferData(this.gl.ARRAY_BUFFER, flatten(this.normals), this.gl.STATIC_DRAW); 
         
-        var colorVar = this.gl.getAttribLocation(this.shaderProgram, "vNormal"); 
-        this.gl.vertexAttribPointer(colorVar, 3, this.gl.FLOAT, false, 0, 0);         
-        this.gl.enableVertexAttribArray(colorVar);
+        // var colorVar = this.gl.getAttribLocation(this.shaderProgram, "vNormal"); 
+        // this.gl.vertexAttribPointer(colorVar, 3, this.gl.FLOAT, false, 0, 0);         
+        // this.gl.enableVertexAttribArray(colorVar);
 
     }
+
+    LoadDataOnGPU() {
+        // this will have a lot of code ugh
+    }
+
+    SetMaterialProperties(materialColor, materialShininess) {
+        this.ambientMaterial = materialColor
+        this.diffuseMaterial = materialColor
+        this.specularMaterial = materialColor;
+        this.shininess = materialShininess;
+    }
+
+    SetLightingProperties(ambientLightColor, diffuseLightColor, specularLightColor) {
+        this.ambientLight = ambientLightColor;
+        this.diffuesLight = diffuseLightColor;
+        this.specularLight = specularLightColor;
+    }
+
+    SetTextureProperties(textureImage) {
+        this.textureImage = textureImage;
+
+        this.textureID = this.gl.createTexture();
+        this.gl.activeTexture(this.gl.TEXTURE0);
+        this.gl.bindTexture(this.gl.TEXTURE_2D, this.textureID);
+        this.gl.pixelStorei(this.gl.UNPACK_FLIP_Y_WEBGL, true);
+
+        // turn the image into a texture
+        this.gl.texImage2D(this.gl.TEXTURE_2D,
+            0,
+            this.gl.RGBA,
+            this.gl.RGBA,
+            this.gl.UNSIGNED_BYTE,
+            this.textureImage);
+
+        // now for the mipmap, Still a little confused about what this is
+    }
+
 
     DrawMonkey() {
         this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.shapeBufferID); 
