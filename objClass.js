@@ -96,6 +96,17 @@ class FunkyMonkey {
             this.textureImage);
 
         // now for the mipmap, Still a little confused about what this is
+        this.gl.generateMipmap(this.gl.TEXTURE_2D);
+        this.gl.texParameteri(this.gl.TEXTURE_2D,
+            this.gl.TEXTURE_MIN_FILTER,
+            this.gl.NEAREST_MIPMAP_LINEAR);
+        this.gl.texParameteri(this.gl.TEXTURE_2D,
+            this.gl.TEXTURE_MAG_FILTER,
+            this.gl.LINEAR);
+
+        this.texturePoints = this.ExtractTextureCoordsForRectangularFaces(this.points);
+        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.textureBufferID);   
+        this.gl.bufferData(this.gl.ARRAY_BUFFER, flatten(this.texturePoints), this.gl.STATIC_DRAW);
     }
 
 
