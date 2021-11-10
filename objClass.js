@@ -24,11 +24,15 @@ class FunkyMonkey {
         this.objData = SimpleObjParse(objFileContents);
         this.points = VerySimpleTriangleVertexExtraction(this.objData);
         //// try to extract the normals and the texture coordinates from the obj file
-        this.normals = EstimateNormalsFromTriangles(this.points);
+        if (this.objData["normals"] !== 0) { // check for error
+            this.normals = objData["normals"];
+        } else {
+            this.normals = EstimateNormalsFromTriangles(this.points);
+        }
 
         this.textureImage = null;
         this.textureID = null;
-        this.texturePoints = [];
+        this.texturePoints = []; // is this where the texture coordinates from the obj file would go?
         for (let i = 0; i < this.points.length; i++) {
             this.texturePoints.push( vec2(-1,-1));
         }
@@ -41,24 +45,6 @@ class FunkyMonkey {
         this.SetLightingProperties(vec4(0.25, 0.25, 0.25, 1.0),   // ambient, low-level
                                    vec4(1.0, 1.0, 1.0, 1.0),   // diffuse, white
                                    vec4(1.0, 1.0, 1.0, 1.0));  // specular, white
-
-        //this.shapeBufferID = this.gl.createBuffer();                                
-        //this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.shapeBufferID);                      
-        //this.gl.bufferData(this.gl.ARRAY_BUFFER, flatten(this.points), this.gl.STATIC_DRAW); 
-
-        // var posVar = this.gl.getAttribLocation(this.shaderProgram, "vPosition"); 
-        // this.gl.vertexAttribPointer(posVar, 4, this.gl.FLOAT, false, 0, 0);     
-        // this.gl.enableVertexAttribArray(posVar);
-
-
-        // // set color/normals
-        // this.colorBufferID = this.gl.createBuffer();                                  
-        // this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.colorBufferID);                       
-        // this.gl.bufferData(this.gl.ARRAY_BUFFER, flatten(this.normals), this.gl.STATIC_DRAW); 
-        
-        // var colorVar = this.gl.getAttribLocation(this.shaderProgram, "vNormal"); 
-        // this.gl.vertexAttribPointer(colorVar, 3, this.gl.FLOAT, false, 0, 0);         
-        // this.gl.enableVertexAttribArray(colorVar);
 
     }
 
@@ -153,6 +139,9 @@ class FunkyMonkey {
         this.gl.drawArrays(this.gl.TRIANGLES, 0, this.points.length);
     }
 
+
+    /**************************Matrix Stuff**************************/
+
     ResetMatrix() {
         this.transformationMatrix = mat4(1.0, 0.0, 0.0, 0.0,
                                         0.0, 1.0, 0.0, 0.0,
@@ -160,7 +149,6 @@ class FunkyMonkey {
                                         0.0, 0.0, 0.0, 1.0)
     }
 
-    // I think I can skip all of the other ones since I want the whole scene to rotate together, so I'll leave that in the other file and this one will just have translate
 
     Translate(tx, ty, tz) {
         // Setup the translation matrix
@@ -208,6 +196,18 @@ class FunkyMonkey {
             0.0, 0.0, 0.0, 1.0);
 
         this.transformationMatrix = mult(Rx, this.transformationMatrix);
+    }
+
+    RotateZ(angle) {
+        var cs = Math.cos(angle * Math.PI / 180.0);
+        var sn = Math.sin(angle * Math.PI / 180.0);
+
+        var Rz = mat4(cs, -sn, 0.0, 0.0,
+                    sn, cs, 0.0, 0.0,
+                    0.0, 0.0, 1.0, 0.0,
+                    0.0, 0.0, 0.0, 1.0);
+
+        this.transformationMatrix = mult(Rz, this.transformationMatrix);
     }
 
 
