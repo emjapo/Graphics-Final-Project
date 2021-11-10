@@ -9,6 +9,18 @@ async function FetchWrapper(objURL) {
     return objFileContents;
 }
 
+// Borrowed from Dr.Weigand's code
+// The global objects list to cheat for rendering
+var gObjectsList = [];
+
+// The global gl and shader hooks to cheat for rendering
+var ggl = null;
+var gShaderProgram = null;
+var gCanvas = null;
+
+
+// I kept all of the the parsing fucntions in the main file becuase thats what I did on project 2
+// If I see a reason to later I may move them but for now I won't mess with a good thing
 function SimpleObjParse(objFileContents) {
     const objFileLines = objFileContents.split('\n');
 
@@ -130,8 +142,7 @@ function EstimateNormalsFromTriangles(points) {
 // *********************************************
 
 
-// Right now I am going to also use the GetModelTransformationMatrix() from week 7 examples, but this is probally likely to change as I don't exactly know what it is doing at the moment
-
+/*********************I think perspective changes need to happen here******************************/
 // I changed variable names to help me no what is going on
 function GetModelTransformationMatrix(rotateXDegree, rotateYDegree, rotateZDegree) {
     var Identity = mat4(1.0, 0.0, 0.0, 0.0,
@@ -182,20 +193,22 @@ function GetModelTransformationMatrix(rotateXDegree, rotateYDegree, rotateZDegre
     //return scalingMatrix;
 }
 
-// Same old load data on the GPU function
-function LoadDataOnGPU(gl, myData, shaderVariableStr, shaderVariableDim, shaderProgram) {
-    var bufferID = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, bufferID);
-    gl.bufferData(gl.ARRAY_BUFFER, flatten(myData), gl.STATIC_DRAW);
 
-    if (shaderVariableStr != "") {
-        var myVar = gl.getAttribLocation(shaderProgram, shaderVariableStr);
-        gl.vertexAttribPointer(myVar, shaderVariableDim, gl.FLOAT, false, 0, 0);
-        gl.enableVertexAttribArray(myVar);
-    }
+//************** Pretty sure this can be removed but I will save it until I am absolutely positive **************/
+// // Same old load data on the GPU function
+// function LoadDataOnGPU(gl, myData, shaderVariableStr, shaderVariableDim, shaderProgram) {
+//     var bufferID = gl.createBuffer();
+//     gl.bindBuffer(gl.ARRAY_BUFFER, bufferID);
+//     gl.bufferData(gl.ARRAY_BUFFER, flatten(myData), gl.STATIC_DRAW);
 
-    return bufferID;
-}
+//     if (shaderVariableStr != "") {
+//         var myVar = gl.getAttribLocation(shaderProgram, shaderVariableStr);
+//         gl.vertexAttribPointer(myVar, shaderVariableDim, gl.FLOAT, false, 0, 0);
+//         gl.enableVertexAttribArray(myVar);
+//     }
+
+//     return bufferID;
+// }
 
 
 // Set up the shaders, this will almost definitely need to be changed later
@@ -306,10 +319,10 @@ async function main() {
         rotateXDegree = parseFloat(event.target.value);
         render(gl, [CuriousGeorge, Banana], shaderProgram, [rotateXDegree, rotateYDegree, rotateZDegree]);
     };
-    document.getElementById("rotatey").oninput = function (event) {
-        rotateYDegree = parseFloat(event.target.value);
-        render(gl, [CuriousGeorge, Banana], shaderProgram, [rotateXDegree, rotateYDegree, rotateZDegree]);
-    };
+    // document.getElementById("rotatey").oninput = function (event) {
+    //     rotateYDegree = parseFloat(event.target.value);
+    //     render(gl, [CuriousGeorge, Banana], shaderProgram, [rotateXDegree, rotateYDegree, rotateZDegree]);
+    // };
     document.getElementById("rotatez").oninput = function (event) {
         rotateZDegree = parseFloat(event.target.value);
         render(gl, [CuriousGeorge, Banana], shaderProgram, [rotateXDegree, rotateYDegree, rotateZDegree]);
