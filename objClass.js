@@ -63,7 +63,35 @@ class FunkyMonkey {
     }
 
     LoadDataOnGPU() {
-        // this will have a lot of code ugh
+        // vertex data 
+        this.vertexBufferID = this.gl.createBuffer();
+        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.vertexBufferID);
+        this.gl.bufferData(this.gl.ARRAY_BUFFER, flatten(this.points), this.gl.STATIC_DRAW);
+
+        // associate shader pos variables with buffer data
+        var posVar = this.gl.getAttribLocation(this.shaderProgram, "vPosition");
+        this.gl.vertexAttribPointer(posVar, 4, this.gl.FLOAT, false, 0, 0);
+        this.gl.enableVertexAttribArray(posVar);
+
+        // normal data
+        this.normalBufferID = this.gl.createBuffer();
+        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.normalBufferID);
+        this.gl.bufferData(this.gl.ARRAY_BUFFER, flatten(this.normals), this.gl.STATIC_DRAW);
+
+        // associate the normal data with the shader
+        var normVar =  this.gl.createBuffer();
+        this.gl.vertexAttribPointer(normVar, 3, this.gl.FLOAT, false, 0, 0);
+        this.gl.enableVertexAttribArray(normVar);
+
+        // texture coordinates
+        this.textureBufferID = this.gl.createBuffer();
+        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.textureBufferID);
+        this.gl.bufferData(this.gl.ARRAY_BUFFER, flatten(this.texturePoints), this.gl.STATIC_DRAW);
+
+        //associate the texture coordinates in the shader
+        var texVar = this.gl.getAttribLocation(this.shaderProgram, "vTexCoord");
+        this.gl.vertexAttribPointer(texVar, 2, this.gl.FLOAT, false, 0, 0);
+        this.gl.enableVertexAttribArray(texVar);
     }
 
     SetMaterialProperties(materialColor, materialShininess) {
