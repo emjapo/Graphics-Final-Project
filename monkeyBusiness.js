@@ -193,6 +193,37 @@ function GetModelTransformationMatrix(rotateXDegree, rotateYDegree, rotateZDegre
     //return scalingMatrix;
 }
 
+function GetPerspectiveProjectionMatrix(fovy, near, far) {
+    var canvas = document.getElementById("gl-canvas");
+    var aspectRatio = canvas.width / canvas.height;
+    var fovyRadian = fovy * Math.PI / 180.0;
+    var nr = near;
+    var fr = far;
+    var tp = nr * Math.tan(fovyRadian);
+    var rgt = tp * aspectRatio;
+
+    var P = (mat4(nr / rgt, 0, 0, 0,
+        0, nr / tp, 0, 0,
+        0, 0, -(fr + nr) / (fr - nr), (-2 * fr * nr) / (fr - nr),
+        0, 0, -1, 0));
+    return (P);
+}
+
+function handleCameraPosition() {
+    var zposition = parseFloat(document.getElementById("zcamera").value);
+    var thetacam = parseFloat(document.getElementById("thetacamera").value);
+    var xpos = zposition * Math.cos(thetacam);
+    var zpos = zposition * Math.sin(thetacam);
+    var cameraMatrix = lookAt(vec3(xpos, 0, zpos),  // Location of camera 
+        vec3(0, 0, 0),  // Where camera is looking
+        vec3(0, 1, 0)); // Which way is "up"
+
+    gl.uniformMatrix4fv(ggl.getUniformLocation(gShaderProgram, "uCameraMatrix"), false, flatten(cameraMatrix));
+
+    render();
+}
+
+
 
 //************** Pretty sure this can be removed but I will save it until I am absolutely positive **************/
 // // Same old load data on the GPU function
@@ -300,9 +331,9 @@ async function main() {
     var shaderProgram = setupShaders(gl);
 
     //possibly will cause issues if my path isn't right 
-    const modelURL = "https://raw.githubusercontent.com/WinthropUniversity/csci440-fa21-project2-emjapo/main/Monkey.obj?token=AM6SBYULXYIHODNAUWBJAMTBQH6WC"; // this changes but I don't know what caused it to change so hopefully it doesn't happen again
+    const modelURL = "https://raw.githubusercontent.com/WinthropUniversity/csci440-fa21-project2-emjapo/main/Monkey.obj?token=AM6SBYRUDDXFW22K7RDYYWTBVREWG"; // this changes but I don't know what caused it to change so hopefully it doesn't happen again
 
-    const bananaURL = "https://raw.githubusercontent.com/WinthropUniversity/csci440-fa21-project2-emjapo/main/banana3.obj?token=AM6SBYUIPCZJGPUOW3DFYOLBQKIJA";
+    const bananaURL = "https://raw.githubusercontent.com/WinthropUniversity/csci440-fa21-project2-emjapo/main/banana3.obj?token=AM6SBYTUMCDSGGGOFHDZHG3BVRETS";
 
     const objFileContents = await FetchWrapper(modelURL);
     const bananaFileContents = await FetchWrapper(bananaURL);
@@ -315,14 +346,14 @@ async function main() {
     var rotateZDegree = 0.0;
 
     // get slider values (not sure this is the best location)
-    document.getElementById("rotatex").oninput = function (event) {
-        rotateXDegree = parseFloat(event.target.value);
-        render(gl, [CuriousGeorge, Banana], shaderProgram, [rotateXDegree, rotateYDegree, rotateZDegree]);
-    };
-    // document.getElementById("rotatey").oninput = function (event) {
-    //     rotateYDegree = parseFloat(event.target.value);
+    // document.getElementById("rotatex").oninput = function (event) {
+    //     rotateXDegree = parseFloat(event.target.value);
     //     render(gl, [CuriousGeorge, Banana], shaderProgram, [rotateXDegree, rotateYDegree, rotateZDegree]);
     // };
+    document.getElementById("rotatey").oninput = function (event) {
+        rotateYDegree = parseFloat(event.target.value);
+        render(gl, [CuriousGeorge, Banana], shaderProgram, [rotateXDegree, rotateYDegree, rotateZDegree]);
+    };
     document.getElementById("rotatez").oninput = function (event) {
         rotateZDegree = parseFloat(event.target.value);
         render(gl, [CuriousGeorge, Banana], shaderProgram, [rotateXDegree, rotateYDegree, rotateZDegree]);

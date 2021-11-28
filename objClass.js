@@ -25,7 +25,7 @@ class FunkyMonkey {
         this.points = VerySimpleTriangleVertexExtraction(this.objData);
         //// try to extract the normals and the texture coordinates from the obj file
         if (this.objData["normals"] !== 0) { // check for error
-            this.normals = objData["normals"];
+            this.normals = this.objData["normals"];
         } else {
             this.normals = EstimateNormalsFromTriangles(this.points);
         }
@@ -117,8 +117,9 @@ class FunkyMonkey {
         this.gl.texParameteri(this.gl.TEXTURE_2D,
             this.gl.TEXTURE_MAG_FILTER,
             this.gl.LINEAR);
-
-        this.texturePoints = this.ExtractTextureCoordsForRectangularFaces(this.points);
+            
+        this.texturePoints = this.objData["texture"]; //  this is where the texture points should be added objData["texture"]  
+        // maybe try environment mapping with sky pictures
         this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.textureBufferID);   
         this.gl.bufferData(this.gl.ARRAY_BUFFER, flatten(this.texturePoints), this.gl.STATIC_DRAW);
     }
