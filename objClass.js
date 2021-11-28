@@ -8,7 +8,7 @@ class FunkyMonkey {
         // Set the transformation matrix. Not sure how this will combine with the work I have done yet
         this.matrixLoc = gl.getUniformLocation(shaderProgram, "uModelMatrix");
         if (this.matrixLoc == null) {
-            console.log("Couldn't find 'uMatrix', sorry sis.");
+            console.log("Couldn't find 'uModelMatrix', sorry.");
         }
         this.transformationMatrix = mat4 (1, 0, 0, 0,
                                         0, 1, 0, 0,

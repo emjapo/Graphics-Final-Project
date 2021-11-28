@@ -245,13 +245,39 @@ function handleCameraPosition() {
 // Set up the shaders, this will almost definitely need to be changed later
 function setupShaders(gl) {
     var vertexShaderCode = "attribute vec4 vPosition;" +
-    "uniform mat4 uModelMatrix;" +
-    "attribute vec3 vNormal;" +
-    "varying vec3 fColor;" +
-    "void main() {" +
-    "   fColor = vNormal;" +
-    "   gl_Position = uModelMatrix * vPosition;" +
-    "}";
+        "attribute vec3 vNormal;" +
+        "attribute vec2 vTexCoord;" +
+        "varying vec4 fColor;" +
+        "varying vec2 fTexCoord;" +
+        "uniform vec4 uAmbientProduct" + //light/shading properties
+        "uniform vec4 uDiffuseProduct;" +
+        "uniform vec4 uSpecularProduct;" +
+        "uniform vec4 uLightPosition;" +
+        "uniform float uShininess;" +
+        "uniform mat4 uModelMatrix;" + //matrices
+        "uniform mat4 uCameraMatrix;" +
+        "uniform mat4 uProjectionMatrix;" +
+        "void main() {" +
+        "   vec3 vertexPos = (uModelMatrix * vPosition).xyz;" +
+        "   vec3 L;" + //light stuff
+        "   if (ulightPosition.w==0.0) L= normalize(uLightPosition.xyz);" +
+        "   else L = normalize(uLightPosition.xyz - vertexPos);" +
+        "   vec3 E = -normalize(vertexPos);" +
+        "   vec3 H = normalize(L+E);" +
+        "   vec4 ambient = uAmbientProduct;" +
+        "   vec4 diffuse = max( dot(L,N), 0.0) * uDiffuseProduct;" +
+        "   vec4 specular = pow( max( dot(N,H), 0.0), uShininess) * uSpecularProduct;" +
+        "   if ( dot(L,N) < 0.0) specular = vec4(0.0, 0.0, 0.0, 1.0);" +
+        "   fColor = ambient + diffuse + specular;" + //get color
+        "   fColor.a = 1.0;" +
+        "   fTexCoord = vTexCoord;" +
+        "   vec3 N = normalize( (uModelMatrix * vec4(vNormal,0.0)).xyz );" +
+        "   gl_Position = uProjectionMatrix * uCameraMatrix * uModelMatrix * vPosition;" + // set position with perspectives
+        "   gl_position.x = gl_Position.x / gl_Position.w;" +
+        "   gl_Position.y = gl_Position.y / gl_Position.w;" +
+        "   gl_Position.z = gl_Position.z / gl_Position.w;" +
+        "   gl_Position.w = 1.0;" +
+        "}";
     var vertexShader = gl.createShader(gl.VERTEX_SHADER);
     gl.shaderSource(vertexShader, vertexShaderCode);
     gl.compileShader(vertexShader);
@@ -263,10 +289,15 @@ function setupShaders(gl) {
     }
 
     var fragmentShaderCode = "precision mediump float;" +
-    "varying vec3 fColor;" +
-    "void  main() {" +
-    "   gl_FragColor = vec4(fColor, 1.0);" +
-    "}";
+        "varying vec4 fColor;" +
+        "varying  vec2 fTexCoord;" +
+        "uniform sampler2D texture;" +
+        "void main() {" +
+        "    if (fTexCoord.x < 0.0)" +  
+        "      gl_FragColor = fColor;" +
+        "    else" +
+        "      gl_FragColor = fColor*texture2D( texture, fTexCoord );" + 
+        "}"
     var fragmentShader = gl.createShader(gl.FRAGMENT_SHADER);
     gl.shaderSource(fragmentShader, fragmentShaderCode);
     gl.compileShader(fragmentShader);
