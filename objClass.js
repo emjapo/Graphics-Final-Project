@@ -17,7 +17,7 @@ class FunkyMonkey {
         this.gl.uniformMatrix4fv(this.matrixLoc, false, flatten(this.transformationMatrix));
     }
 
-    //************************* */
+    //**************************/
     // Get the points
     // maybe just having the function calls from the main file will work
     CreateMonkeyPoints(objFileContents) {
@@ -42,9 +42,9 @@ class FunkyMonkey {
 
         //set up lighting
         this.SetMaterialProperties(vec4(1.0, 0.75, 0.25, 1.0), 100.0);
-        this.SetLightingProperties(vec4(0.25, 0.25, 0.25, 1.0),   // ambient, low-level
-                                   vec4(1.0, 1.0, 1.0, 1.0),   // diffuse, white
-                                   vec4(1.0, 1.0, 1.0, 1.0));  // specular, white
+        this.SetLightingProperties(vec4(0.25, 0.25, 0.25, 1.0),   
+                                   vec4(1.0, 1.0, 1.0, 1.0),  
+                                   vec4(1.0, 1.0, 1.0, 1.0)); 
 
     }
 
@@ -65,7 +65,7 @@ class FunkyMonkey {
         this.gl.bufferData(this.gl.ARRAY_BUFFER, flatten(this.normals), this.gl.STATIC_DRAW);
 
         // associate the normal data with the shader
-        var normVar =  this.gl.createBuffer();
+        var normVar = this.gl.getAttribLocation(this.shaderProgram, "vNormal");
         this.gl.vertexAttribPointer(normVar, 3, this.gl.FLOAT, false, 0, 0);
         this.gl.enableVertexAttribArray(normVar);
 
@@ -89,7 +89,7 @@ class FunkyMonkey {
 
     SetLightingProperties(ambientLightColor, diffuseLightColor, specularLightColor) {
         this.ambientLight = ambientLightColor;
-        this.diffuesLight = diffuseLightColor;
+        this.diffuseLight = diffuseLightColor;
         this.specularLight = specularLightColor;
     }
 
@@ -126,15 +126,33 @@ class FunkyMonkey {
 
 
     DrawMonkey() {
+        //position
         this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.shapeBufferID); 
         var positionVar = this.gl.getAttribLocation(this.shaderProgram, "vPosition");
         this.gl.vertexAttribPointer(positionVar, 4, this.gl.FLOAT, false, 0, 0);
+      
+        //normals
+        var normalVar = this.gl.getAttribLocation(this.shaderProgram, "vNormal"); 
+        this.gl.vertexAttribPointer(normalVar, 3, this.gl.FLOAT, false, 0, 0);
 
-        //// color questionable, I'll be back
-        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.colorBufferID);          
-        var colorVar = this.gl.getAttribLocation(this.shaderProgram, "vNormal"); 
-        this.gl.vertexAttribPointer(colorVar, 3, this.gl.FLOAT, false, 0, 0);
+        //texture
+        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.tetxtureBufferID);
+        var colorVar = this.gl.getAttribLocation(this.shaderProgram, "vTexCoord");
+        this.gl.vertexAttribPointer(colorVar, 2, this.gl.FLOAT, false, 0, 0);
 
+        //lighting and stuff
+        var ambientProduct = mult(this.ambientLight, this.ambientMaterial);
+        this.gl.uniform4fv(this.gl.getUniformLocation(this.shaderProgram, "uAmbientProduct"), flatten(ambientProduct));
+
+        var diffuseProduct = mult(this.diffuseLight, this.diffuseMaterial);
+        this.gl.uniform4fv(this.gl.getUniformLocation(this.shaderProgram, "uDiffuseProduct"), flatten(diffuseProduct));
+
+        var specularProduct = mult(this.specularLight, this.specularMaterial);
+        this.gl.uniform4fv(this.gl.getUniformLocation(this.shaderProgram, "uSpecularProduct"), flatten(specularProduct));
+
+        this.gl.uniform1f(this.gl.getUniformLocation(this.shaderProgram, "uShininess"), this.shininess);
+
+        //transformation matrix
         this.gl.uniformMatrix4fv(this.matrixLoc, false, flatten(this.transformationMatrix));
 
         this.gl.drawArrays(this.gl.TRIANGLES, 0, this.points.length);

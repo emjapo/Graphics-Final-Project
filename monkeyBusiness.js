@@ -249,7 +249,7 @@ function setupShaders(gl) {
         "attribute vec2 vTexCoord;" +
         "varying vec4 fColor;" +
         "varying vec2 fTexCoord;" +
-        "uniform vec4 uAmbientProduct" + //light/shading properties
+        "uniform vec4 uAmbientProduct;" + //light/shading properties
         "uniform vec4 uDiffuseProduct;" +
         "uniform vec4 uSpecularProduct;" +
         "uniform vec4 uLightPosition;" +
@@ -260,10 +260,11 @@ function setupShaders(gl) {
         "void main() {" +
         "   vec3 vertexPos = (uModelMatrix * vPosition).xyz;" +
         "   vec3 L;" + //light stuff
-        "   if (ulightPosition.w==0.0) L= normalize(uLightPosition.xyz);" +
+        "   if (uLightPosition.w==0.0) L= normalize(uLightPosition.xyz);" +
         "   else L = normalize(uLightPosition.xyz - vertexPos);" +
         "   vec3 E = -normalize(vertexPos);" +
         "   vec3 H = normalize(L+E);" +
+        "   vec3 N = normalize( (uModelMatrix * vec4(vNormal,0.0)).xyz );" +
         "   vec4 ambient = uAmbientProduct;" +
         "   vec4 diffuse = max( dot(L,N), 0.0) * uDiffuseProduct;" +
         "   vec4 specular = pow( max( dot(N,H), 0.0), uShininess) * uSpecularProduct;" +
@@ -271,9 +272,8 @@ function setupShaders(gl) {
         "   fColor = ambient + diffuse + specular;" + //get color
         "   fColor.a = 1.0;" +
         "   fTexCoord = vTexCoord;" +
-        "   vec3 N = normalize( (uModelMatrix * vec4(vNormal,0.0)).xyz );" +
         "   gl_Position = uProjectionMatrix * uCameraMatrix * uModelMatrix * vPosition;" + // set position with perspectives
-        "   gl_position.x = gl_Position.x / gl_Position.w;" +
+        "   gl_Position.x = gl_Position.x / gl_Position.w;" +
         "   gl_Position.y = gl_Position.y / gl_Position.w;" +
         "   gl_Position.z = gl_Position.z / gl_Position.w;" +
         "   gl_Position.w = 1.0;" +
@@ -356,10 +356,25 @@ async function main() {
     
 
     gl.viewport(0, 0, canvas.clientWidth, canvas.height);
-    gl.clearColor(0.9, 0.9, 0.9, 1.0);
+    gl.clearColor(1.0, 1.0, 1.0, 1.0);
     gl.enable(gl.DEPTH_TEST);
 
     var shaderProgram = setupShaders(gl);
+
+    
+    var zposition = parseFloat(document.getElementById("rotatez").value);
+    var thetacam = parseFloat(document.getElementById("rotatey").value);
+    var xpos = zposition * Math.cos(thetacam);
+    var zpos = zposition * Math.sin(thetacam);
+    var cameraMatrix = lookAt(vec3(xpos, 0, zpos), 
+        vec3(0, 0, 0),  
+        vec3(0, 1, 0)); 
+    var perspMatrix = GetPerspectiveProjectionMatrix(45, 0.05, 3.0);
+    gl.uniformMatrix4fv(gl.getUniformLocation(shaderProgram, "uCameraMatrix"), false, flatten(cameraMatrix));
+    gl.uniformMatrix4fv(gl.getUniformLocation(shaderProgram, "uProjectionMatrix"), false, flatten(perspMatrix));
+    var lightPosition = vec4(1.0, 1.0, -1.0, 0.0);
+    gl.uniform4fv(gl.getUniformLocation(shaderProgram, "uLightPosition"), flatten(lightPosition));
+
 
     //possibly will cause issues if my path isn't right 
     const modelURL = "https://raw.githubusercontent.com/WinthropUniversity/csci440-fa21-project2-emjapo/main/Monkey.obj?token=AM6SBYRUDDXFW22K7RDYYWTBVREWG"; // this changes but I don't know what caused it to change so hopefully it doesn't happen again
@@ -377,18 +392,19 @@ async function main() {
     var rotateZDegree = 0.0;
 
     // get slider values (not sure this is the best location)
-    // document.getElementById("rotatex").oninput = function (event) {
-    //     rotateXDegree = parseFloat(event.target.value);
+
+    document.getElementById("rotatez").oninput = handleCameraPosition;
+    document.getElementById("rotatey").oninput = handleCameraPosition;
+
+
+    // document.getElementById("rotatey").oninput = function (event) {
+    //     rotateYDegree = parseFloat(event.target.value);
     //     render(gl, [CuriousGeorge, Banana], shaderProgram, [rotateXDegree, rotateYDegree, rotateZDegree]);
     // };
-    document.getElementById("rotatey").oninput = function (event) {
-        rotateYDegree = parseFloat(event.target.value);
-        render(gl, [CuriousGeorge, Banana], shaderProgram, [rotateXDegree, rotateYDegree, rotateZDegree]);
-    };
-    document.getElementById("rotatez").oninput = function (event) {
-        rotateZDegree = parseFloat(event.target.value);
-        render(gl, [CuriousGeorge, Banana], shaderProgram, [rotateXDegree, rotateYDegree, rotateZDegree]);
-    };
+    // document.getElementById("rotatez").oninput = function (event) {
+    //     rotateZDegree = parseFloat(event.target.value);
+    //     render(gl, [CuriousGeorge, Banana], shaderProgram, [rotateXDegree, rotateYDegree, rotateZDegree]);
+    // };
 
     window.requestAnimFrame(function () { render(gl, [CuriousGeorge, Banana], shaderProgram, [rotateXDegree, rotateYDegree, rotateZDegree]) });
 }
