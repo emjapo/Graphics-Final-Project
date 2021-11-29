@@ -361,12 +361,12 @@ async function main() {
 
     var shaderProgram = setupShaders(gl);
 
-    
+
     var zposition = parseFloat(document.getElementById("rotatez").value);
-    var thetacam = parseFloat(document.getElementById("rotatey").value);
+    var thetacam = parseFloat(document.getElementById("rotatey").value); // wrong
     var xpos = zposition * Math.cos(thetacam);
     var zpos = zposition * Math.sin(thetacam);
-    var cameraMatrix = lookAt(vec3(xpos, 0, zpos), 
+    var cameraMatrix = lookAt(vec3(xpos, 0, zpos), // do affine transformation on the eye to move the camera
         vec3(0, 0, 0),  
         vec3(0, 1, 0)); 
     var perspMatrix = GetPerspectiveProjectionMatrix(45, 0.05, 3.0);
@@ -406,7 +406,8 @@ async function main() {
     //     render(gl, [CuriousGeorge, Banana], shaderProgram, [rotateXDegree, rotateYDegree, rotateZDegree]);
     // };
 
-    window.requestAnimFrame(function () { render(gl, [CuriousGeorge, Banana], shaderProgram, [rotateXDegree, rotateYDegree, rotateZDegree]) });
+    // window.requestAnimFrame(function () { render(gl, [CuriousGeorge, Banana], shaderProgram, [rotateXDegree, rotateYDegree, rotateZDegree]) });
+    render(gl, [CuriousGeorge, Banana], shaderProgram, [rotateXDegree, rotateYDegree, rotateZDegree]);
 }
 
 window.onload = function init() {

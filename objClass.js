@@ -127,16 +127,17 @@ class FunkyMonkey {
 
     DrawMonkey() {
         //position
-        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.shapeBufferID); 
+        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.vertexBufferID);
         var positionVar = this.gl.getAttribLocation(this.shaderProgram, "vPosition");
         this.gl.vertexAttribPointer(positionVar, 4, this.gl.FLOAT, false, 0, 0);
       
         //normals
+        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.normalBufferID);
         var normalVar = this.gl.getAttribLocation(this.shaderProgram, "vNormal"); 
         this.gl.vertexAttribPointer(normalVar, 3, this.gl.FLOAT, false, 0, 0);
 
         //texture
-        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.tetxtureBufferID);
+        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.textureBufferID);
         var colorVar = this.gl.getAttribLocation(this.shaderProgram, "vTexCoord");
         this.gl.vertexAttribPointer(colorVar, 2, this.gl.FLOAT, false, 0, 0);
 
@@ -151,6 +152,7 @@ class FunkyMonkey {
         this.gl.uniform4fv(this.gl.getUniformLocation(this.shaderProgram, "uSpecularProduct"), flatten(specularProduct));
 
         this.gl.uniform1f(this.gl.getUniformLocation(this.shaderProgram, "uShininess"), this.shininess);
+
 
         //transformation matrix
         this.gl.uniformMatrix4fv(this.matrixLoc, false, flatten(this.transformationMatrix));
