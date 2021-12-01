@@ -210,36 +210,41 @@ function GetPerspectiveProjectionMatrix(fovy, near, far) {
 }
 
 function handleCameraPosition() {
-    var zposition = parseFloat(document.getElementById("zcamera").value);
-    var thetacam = parseFloat(document.getElementById("thetacamera").value);
-    var xpos = zposition * Math.cos(thetacam);
-    var zpos = zposition * Math.sin(thetacam);
-    var cameraMatrix = lookAt(vec3(xpos, 0, zpos),  // Location of camera 
+    var rotateZ = parseFloat(document.getElementById("rotatez").value);
+    var rotateY = parseFloat(document.getElementById("rotatey").value);
+
+    var eye = vec4(1.0, 1.0, 1.0, 1.0);
+
+    var cs = Math.cos(rotateY * Math.PI / 180.0);
+    var sn = Math.sin(rotateY * Math.PI / 180.0);
+
+    var Ry = mat4(cs, 0.0, sn, 0.0,
+        0.0, 1.0, 0.0, 0.0,
+        -sn, 0.0, cs, 0.0,
+        0.0, 0.0, 0.0, 1.0);
+
+    var csZ = Math.cos(rotateZ * Math.PI / 180.0);
+    var snZ = Math.sin(rotateZ * Math.PI / 180.0);
+
+    var Rz = mat4(csZ, -snZ, 0.0, 0.0,
+        snZ, csZ, 0.0, 0.0,
+        0.0, 0.0, 1.0, 0.0,
+        0.0, 0.0, 0.0, 1.0);
+
+
+    eye = mult(Rz, mult(Ry, eye));
+    console.log(eye);
+    console.log(eye[0]);
+
+    var cameraMatrix = lookAt(vec3(eye[0], eye[1], eye[2]),  // Location of camera 
         vec3(0, 0, 0),  // Where camera is looking
         vec3(0, 1, 0)); // Which way is "up"
 
-    gl.uniformMatrix4fv(ggl.getUniformLocation(gShaderProgram, "uCameraMatrix"), false, flatten(cameraMatrix));
+    ggl.uniformMatrix4fv(ggl.getUniformLocation(gShaderProgram, "uCameraMatrix"), false, flatten(cameraMatrix));
 
-    render();
+    //render();
 }
 
-
-
-//************** Pretty sure this can be removed but I will save it until I am absolutely positive **************/
-// // Same old load data on the GPU function
-// function LoadDataOnGPU(gl, myData, shaderVariableStr, shaderVariableDim, shaderProgram) {
-//     var bufferID = gl.createBuffer();
-//     gl.bindBuffer(gl.ARRAY_BUFFER, bufferID);
-//     gl.bufferData(gl.ARRAY_BUFFER, flatten(myData), gl.STATIC_DRAW);
-
-//     if (shaderVariableStr != "") {
-//         var myVar = gl.getAttribLocation(shaderProgram, shaderVariableStr);
-//         gl.vertexAttribPointer(myVar, shaderVariableDim, gl.FLOAT, false, 0, 0);
-//         gl.enableVertexAttribArray(myVar);
-//     }
-
-//     return bufferID;
-// }
 
 
 // Set up the shaders, this will almost definitely need to be changed later
@@ -324,8 +329,8 @@ function setupShaders(gl) {
 
 
 // Another functions that will be refactored later but for now I am just concerned with if my obj file will be rendered
-function render(gl, monkeyList, shaderProgram, rotationList) {
-    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+function render(monkeyList, rotationList) {
+    ggl.clear(ggl.COLOR_BUFFER_BIT | ggl.DEPTH_BUFFER_BIT);
 
     // var modelMatrixLoc = gl.getUniformLocation(shaderProgram, "uModelMatrix");
     // var modelMatrix = GetModelTransformationMatrix(rotationList[0], rotationList[1], rotationList[2]);
@@ -361,6 +366,10 @@ async function main() {
 
     var shaderProgram = setupShaders(gl);
 
+    ggl = gl;
+    gShaderProgram = shaderProgram;
+    gCanvas = canvas;
+
 
     var zposition = parseFloat(document.getElementById("rotatez").value);
     var thetacam = parseFloat(document.getElementById("rotatey").value); // wrong
@@ -393,8 +402,16 @@ async function main() {
 
     // get slider values (not sure this is the best location)
 
-    document.getElementById("rotatez").oninput = handleCameraPosition;
-    document.getElementById("rotatey").oninput = handleCameraPosition;
+    handleCameraPosition();
+
+    document.getElementById("rotatez").oninput = function(event) {
+        handleCameraPosition();
+        render([CuriousGeorge, Banana], [rotateXDegree, rotateYDegree, rotateZDegree]);
+    };
+    document.getElementById("rotatey").oninput = function (event) {
+        handleCameraPosition();
+        render([CuriousGeorge, Banana], [rotateXDegree, rotateYDegree, rotateZDegree]);
+    };
 
 
     // document.getElementById("rotatey").oninput = function (event) {
@@ -407,7 +424,7 @@ async function main() {
     // };
 
     // window.requestAnimFrame(function () { render(gl, [CuriousGeorge, Banana], shaderProgram, [rotateXDegree, rotateYDegree, rotateZDegree]) });
-    render(gl, [CuriousGeorge, Banana], shaderProgram, [rotateXDegree, rotateYDegree, rotateZDegree]);
+    render([CuriousGeorge, Banana], [rotateXDegree, rotateYDegree, rotateZDegree]);
 }
 
 window.onload = function init() {
