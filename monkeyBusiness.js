@@ -186,14 +186,16 @@ function handleCameraPosition() {
         0.0, 0.0, 0.0, 1.0);
 
 
-    eye = mult(Rz, mult(Ry, eye));
+    //eye = mult(Rz, mult(Ry, eye));
     console.log(eye);
     console.log(eye[0]);
 
     var cameraMatrix = lookAt(vec3(eye[0], eye[1], eye[2]),  // Location of camera 
         vec3(0, 0, 0),  // Where camera is looking
         vec3(0, 1, 0)); // Which way is "up"
+    
 
+    cameraMatrix = mult(Rz, mult(Ry, cameraMatrix)); // this might be the answer, I was thinking the rotations would just be on the eye vector, I could still be wrong though 
     ggl.uniformMatrix4fv(ggl.getUniformLocation(gShaderProgram, "uCameraMatrix"), false, flatten(cameraMatrix));
 
     //render();
@@ -289,8 +291,8 @@ function render(monkeyList) {
 
     for (let monkeyIdx = 0; monkeyIdx < monkeyList.length; monkeyIdx++) {
         monkeyList[monkeyIdx].ResetMatrix();
-        monkeyList[0].Translate(0.5, 0.0, 0.0);
-        monkeyList[1].Translate(-2.4, -0.2, 0.0);
+        monkeyList[0].Translate(0.5, 0.0, 0.4);
+        monkeyList[1].Translate(-2.4, -0.2, 0.4);
         monkeyList[1].Scale(0.6, 0.6, 0.6);
         // monkeyList[1].RotateX(45);
         // monkeyList[1].RotateY(45);
