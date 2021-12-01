@@ -118,7 +118,7 @@ class FunkyMonkey {
             this.gl.TEXTURE_MAG_FILTER,
             this.gl.LINEAR);
             
-        this.texturePoints = this.objData["texture"]; //  this is where the texture points should be added objData["texture"]  
+        this.texturePoints = this.objData["textures"]; //  this is where the texture points should be added objData["texture"]
         // maybe try environment mapping with sky pictures
         this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.textureBufferID);   
         this.gl.bufferData(this.gl.ARRAY_BUFFER, flatten(this.texturePoints), this.gl.STATIC_DRAW);

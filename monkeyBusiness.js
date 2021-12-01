@@ -144,54 +144,7 @@ function EstimateNormalsFromTriangles(points) {
 
 /*********************I think perspective changes need to happen here******************************/
 // I changed variable names to help me no what is going on
-function GetModelTransformationMatrix(rotateXDegree, rotateYDegree, rotateZDegree) {
-    var Identity = mat4(1.0, 0.0, 0.0, 0.0,
-                            0.0, 1.0, 0.0, 0.0,
-                            0.0, 0.0, 1.0, 0.0,
-                            0.0, 0.0, 0.0, 1.0);
-   
-    var cosx = Math.cos(rotateXDegree * (Math.PI/180));
-    var sinx = Math.sin(rotateXDegree * (Math.PI / 180));
 
-    var cosy = Math.cos(rotateYDegree * (Math.PI / 180));
-    var siny = Math.sin(rotateYDegree * (Math.PI / 180));
-
-    var cosz = Math.cos(rotateZDegree * (Math.PI / 180));
-    var sinz = Math.sin(rotateZDegree * (Math.PI / 180));
-
-   var scalingMatrix = mat4(0.6, 0.0, 0.0, 0.0,
-                            0.0, 0.6, 0.0, 0.0,
-                            0.0, 0.0, 0.6, 0.0,
-                            0.0, 0.0, 0.0, 1.0 );
-    //var scalingMatrix = Identity;
-    
-    var rotationY = mat4(cosy, 0.0, siny, 0.0,
-                        0.0, 1.0, 0.0, 0.0,
-                        -siny, 0.0, cosy, 0.0,
-                        0.0, 0.0, 0.0, 1.0);
-
-    var rotationX = mat4(1.0, 0.0, 0.0, 0.0,
-                        0.0, cosx, -sinx, 0.0,
-                        0.0, sinx, cosx, 0.0,
-                        0.0, 0.0, 0.0, 1.0 );
-
-    var rotationZ = mat4(cosz, -sinz, 0.0, 0.0,
-                        sinz, cosz, 0.0, 0.0,
-                        0.0, 0.0, 1.0, 0.0,
-                        0.0, 0.0, 0.0, 1.0);
-
-    if (rotateXDegree == 0.0) {
-        rotationX = Identity;
-    }
-    if (rotateYDegree == 0.0) {
-        rotationY = Identity;
-    }
-    if (rotateZDegree == 0.0) {
-        rotationZ = Identity;
-    }
-    return (mult(rotationZ, mult(rotationX, mult(rotationY, scalingMatrix))));
-    //return scalingMatrix;
-}
 
 function GetPerspectiveProjectionMatrix(fovy, near, far) {
     var canvas = document.getElementById("gl-canvas");
@@ -213,7 +166,8 @@ function handleCameraPosition() {
     var rotateZ = parseFloat(document.getElementById("rotatez").value);
     var rotateY = parseFloat(document.getElementById("rotatey").value);
 
-    var eye = vec4(1.0, 1.0, 1.0, 1.0);
+    var eye = vec4(0.8, -0.6, -1.4, 1.0);
+    //var eye = vec4(1.0, 0.0, 0.0, 0.0);
 
     var cs = Math.cos(rotateY * Math.PI / 180.0);
     var sn = Math.sin(rotateY * Math.PI / 180.0);
@@ -329,26 +283,20 @@ function setupShaders(gl) {
 
 
 // Another functions that will be refactored later but for now I am just concerned with if my obj file will be rendered
-function render(monkeyList, rotationList) {
+function render(monkeyList) {
     ggl.clear(ggl.COLOR_BUFFER_BIT | ggl.DEPTH_BUFFER_BIT);
 
-    // var modelMatrixLoc = gl.getUniformLocation(shaderProgram, "uModelMatrix");
-    // var modelMatrix = GetModelTransformationMatrix(rotationList[0], rotationList[1], rotationList[2]);
 
     for (let monkeyIdx = 0; monkeyIdx < monkeyList.length; monkeyIdx++) {
         monkeyList[monkeyIdx].ResetMatrix();
         monkeyList[0].Translate(0.5, 0.0, 0.0);
         monkeyList[1].Translate(-2.4, -0.2, 0.0);
         monkeyList[1].Scale(0.6, 0.6, 0.6);
-        monkeyList[1].RotateX(45);
-        monkeyList[1].RotateY(45);
-        monkeyList[monkeyIdx].GetMatrix(rotationList[0], rotationList[1], rotationList[2]);
+        // monkeyList[1].RotateX(45);
+        // monkeyList[1].RotateY(45);
+        //monkeyList[monkeyIdx].GetMatrix(rotationList[0], rotationList[1], rotationList[2]);
         monkeyList[monkeyIdx].DrawMonkey();
     }
-    // console.log(modelMatrix);
-    // gl.uniformMatrix4fv(modelMatrixLoc, false, flatten(modelMatrix));
-
-    // gl.drawArrays(gl.TRIANGLES, 0, pointLength);
 }
 
 // main function that invokes all of the other functions
@@ -396,9 +344,16 @@ async function main() {
     var CuriousGeorge = new FunkyMonkey(gl, shaderProgram, objFileContents);
     var Banana = new FunkyMonkey(gl, shaderProgram, bananaFileContents);
 
-    var rotateXDegree = 0.0;
-    var rotateYDegree = 0.0;
-    var rotateZDegree = 0.0;
+    CuriousGeorge.SetMaterialProperties(vec4(1.0, 0.0, 0.0, 1.0), 10000.0);
+    var image = new Image();
+    image.crossOrigin = "anonymous";  // to avoid the CORS error ...
+    image.src = "https://raw.githubusercontent.com/WinthropUniversity/CSCI440-Examples/master/Week11/falltexture.png";
+    image.onload = function () {
+        CuriousGeorge.SetTextureProperties(image);
+    }
+    // image.crossOrigin = "anonymous";  // to avoid the CORS error ...
+    // image.src = "https://raw.githubusercontent.com/WinthropUniversity/CSCI440-Examples/master/Week11/falltexture.png";
+    
 
     // get slider values (not sure this is the best location)
 
@@ -406,25 +361,14 @@ async function main() {
 
     document.getElementById("rotatez").oninput = function(event) {
         handleCameraPosition();
-        render([CuriousGeorge, Banana], [rotateXDegree, rotateYDegree, rotateZDegree]);
+        render([CuriousGeorge, Banana]);
     };
     document.getElementById("rotatey").oninput = function (event) {
         handleCameraPosition();
-        render([CuriousGeorge, Banana], [rotateXDegree, rotateYDegree, rotateZDegree]);
+        render([CuriousGeorge, Banana]);
     };
 
-
-    // document.getElementById("rotatey").oninput = function (event) {
-    //     rotateYDegree = parseFloat(event.target.value);
-    //     render(gl, [CuriousGeorge, Banana], shaderProgram, [rotateXDegree, rotateYDegree, rotateZDegree]);
-    // };
-    // document.getElementById("rotatez").oninput = function (event) {
-    //     rotateZDegree = parseFloat(event.target.value);
-    //     render(gl, [CuriousGeorge, Banana], shaderProgram, [rotateXDegree, rotateYDegree, rotateZDegree]);
-    // };
-
-    // window.requestAnimFrame(function () { render(gl, [CuriousGeorge, Banana], shaderProgram, [rotateXDegree, rotateYDegree, rotateZDegree]) });
-    render([CuriousGeorge, Banana], [rotateXDegree, rotateYDegree, rotateZDegree]);
+    render([CuriousGeorge, Banana]);
 }
 
 window.onload = function init() {
