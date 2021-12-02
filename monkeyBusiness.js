@@ -196,6 +196,12 @@ function handleCameraPosition() {
     
 
     cameraMatrix = mult(Rz, mult(Ry, cameraMatrix)); // this might be the answer, I was thinking the rotations would just be on the eye vector, I could still be wrong though 
+
+    var cameraPosition = vec3(cameraMatrix[0][0], cameraMatrix[0][1], cameraMatrix[0][2]);
+
+    var worldCameraPositionLocation = ggl.getUniformLocation(program, "u_worldCameraPosition");
+    gl.uniform3fv(worldCameraPositionLocation, cameraPosition);
+
     ggl.uniformMatrix4fv(ggl.getUniformLocation(gShaderProgram, "uCameraMatrix"), false, flatten(cameraMatrix));
 
     //render();
@@ -206,6 +212,8 @@ function handleCameraPosition() {
 // Set up the shaders, this will almost definitely need to be changed later
 function setupShaders(gl) {
     var vertexShaderCode = "attribute vec4 vPosition;" +
+        "varying vec3 v_worldPosition;" +
+        "varying vec3 v_worldNormal;" +
         "attribute vec3 vNormal;" +
         "attribute vec2 vTexCoord;" +
         "varying vec4 fColor;" +
@@ -240,6 +248,8 @@ function setupShaders(gl) {
         "   gl_Position.y = gl_Position.y / gl_Position.w;" +
         "   gl_Position.z = gl_Position.z / gl_Position.w;" +
         "   gl_Position.w = 1.0;" +
+        "   v_worldPosition = vec3(gl_Position.x, gl_Position.y, gl_Position.z);" +
+        "   v_worldNormal = vNormal;" +
         "}";
     var vertexShader = gl.createShader(gl.VERTEX_SHADER);
     gl.shaderSource(vertexShader, vertexShaderCode);
@@ -252,15 +262,25 @@ function setupShaders(gl) {
     }
 
     var fragmentShaderCode = "precision mediump float;" +
-        "varying vec4 fColor;" +
-        "varying  vec2 fTexCoord;" +
-        "uniform sampler2D texture;" +
+    "varying vec3 v_worldPosition;" +
+    "varying vec3 v_worldNormal;"+
+    "uniform samplerCube u_texture;" +
+    "uniform vec3 u_worldCameraPosition;" +
         "void main() {" +
-        // "    if (fTexCoord.x < 0.0)" +  
-        "      gl_FragColor = fColor;" +
-        // "    else" +
-        // "      gl_FragColor = fColor*texture2D( texture, fTexCoord );" + 
-        "}"
+        "   vec3 worldNormal = normalize(v_worldNormal);"+
+        "    vec3 eyeToSurfaceDir = normalize(v_worldPosition - u_worldCameraPosition);" +
+        "    vec3 direction = reflect(eyeToSurfaceDir, worldNormal);"+
+        "    gl_FragColor = textureCube(u_texture, direction);" +
+        "}";
+        // "varying vec4 fColor;" +
+        // "varying  vec2 fTexCoord;" +
+        // "uniform sampler2D texture;" +
+        // "void main() {" +
+        // // "    if (fTexCoord.x < 0.0)" +  
+        // "      gl_FragColor = fColor;" +
+        // // "    else" +
+        // // "      gl_FragColor = fColor*texture2D( texture, fTexCoord );" + 
+        // "}"
     var fragmentShader = gl.createShader(gl.FRAGMENT_SHADER);
     gl.shaderSource(fragmentShader, fragmentShaderCode);
     gl.compileShader(fragmentShader);
@@ -303,6 +323,70 @@ function render(monkeyList) {
     }
 }
 
+function SetEnvironmentMapping(gl) {
+    // Create a texture.
+    var texture = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_CUBE_MAP, texture);
+
+    const faceInfos = [
+        {
+            target: gl.TEXTURE_CUBE_MAP_POSITIVE_X,
+            url: 'px.png',
+        },
+        {
+            target: gl.TEXTURE_CUBE_MAP_NEGATIVE_X,
+            url: 'nx.png',
+        },
+        {
+            target: gl.TEXTURE_CUBE_MAP_POSITIVE_Y,
+            url: 'py.png',
+        },
+        {
+            target: gl.TEXTURE_CUBE_MAP_NEGATIVE_Y,
+            url: 'ny.png',
+        },
+        {
+            target: gl.TEXTURE_CUBE_MAP_POSITIVE_Z,
+            url: 'pz.png',
+        },
+        {
+            target: gl.TEXTURE_CUBE_MAP_NEGATIVE_Z,
+            url: 'nz.png', // need to change this once I push
+        },
+    ];
+    faceInfos.forEach((faceInfo) => {
+        const { target, url } = faceInfo;
+
+        // Upload the canvas to the cubemap face.
+        const level = 0;
+        const internalFormat = gl.RGBA;
+        const width = 512;
+        const height = 512;
+        const format = gl.RGBA;
+        const type = gl.UNSIGNED_BYTE;
+
+        // setup each face so it's immediately renderable
+        gl.texImage2D(target, level, internalFormat, width, height, 0, format, type, null);
+
+        // Asynchronously load an image
+        const image = new Image();
+        image.crossOrigin = "anonymous";
+        image.src = url;
+        image.addEventListener('load', function () {
+            // Now that the image has loaded upload it to the texture.
+            gl.bindTexture(gl.TEXTURE_CUBE_MAP, texture);
+            gl.texImage2D(target, level, internalFormat, format, type, image);
+            gl.generateMipmap(gl.TEXTURE_CUBE_MAP);
+        });
+    });
+    gl.generateMipmap(gl.TEXTURE_CUBE_MAP);
+    gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
+
+    var textureLocation = gl.getUniformLocation(program, "u_texture");
+
+    gl.uniform1i(textureLocation, 0);
+}
+
 // main function that invokes all of the other functions
 async function main() {
     var canvas = document.getElementById("gl-canvas");
@@ -321,6 +405,8 @@ async function main() {
     ggl = gl;
     gShaderProgram = shaderProgram;
     gCanvas = canvas;
+
+    SetEnvironmentMapping(gl);
 
 
     var zposition = parseFloat(document.getElementById("rotatez").value);
