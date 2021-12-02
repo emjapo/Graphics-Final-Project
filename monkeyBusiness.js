@@ -199,8 +199,8 @@ function handleCameraPosition() {
 
     var cameraPosition = vec3(cameraMatrix[0][0], cameraMatrix[0][1], cameraMatrix[0][2]);
 
-    var worldCameraPositionLocation = ggl.getUniformLocation(program, "u_worldCameraPosition");
-    gl.uniform3fv(worldCameraPositionLocation, cameraPosition);
+    var worldCameraPositionLocation = ggl.getUniformLocation(gShaderProgram, "u_worldCameraPosition");
+    ggl.uniform3fv(worldCameraPositionLocation, cameraPosition);
 
     ggl.uniformMatrix4fv(ggl.getUniformLocation(gShaderProgram, "uCameraMatrix"), false, flatten(cameraMatrix));
 
@@ -323,7 +323,7 @@ function render(monkeyList) {
     }
 }
 
-function SetEnvironmentMapping(gl) {
+function SetEnvironmentMapping(gl, shaderProgram) {
     // Create a texture.
     var texture = gl.createTexture();
     gl.bindTexture(gl.TEXTURE_CUBE_MAP, texture);
@@ -331,27 +331,27 @@ function SetEnvironmentMapping(gl) {
     const faceInfos = [
         {
             target: gl.TEXTURE_CUBE_MAP_POSITIVE_X,
-            url: 'px.png',
+            url: 'https://raw.githubusercontent.com/WinthropUniversity/csci440-fa21-project3-emjapo/EnviroMapping/px.png?token=AM6SBYSYQTF4IM5QRL3DPIDBWGSAI',
         },
         {
             target: gl.TEXTURE_CUBE_MAP_NEGATIVE_X,
-            url: 'nx.png',
+            url: 'https://raw.githubusercontent.com/WinthropUniversity/csci440-fa21-project3-emjapo/EnviroMapping/nx.png?token=AM6SBYXOGKRLL3DJ5ZGX7YDBWGRDS',
         },
         {
             target: gl.TEXTURE_CUBE_MAP_POSITIVE_Y,
-            url: 'py.png',
+            url: 'https://raw.githubusercontent.com/WinthropUniversity/csci440-fa21-project3-emjapo/EnviroMapping/py.png?token=AM6SBYRGSFU3ZH7CBY5IJR3BWGSCQ',
         },
         {
             target: gl.TEXTURE_CUBE_MAP_NEGATIVE_Y,
-            url: 'ny.png',
+            url: 'https://raw.githubusercontent.com/WinthropUniversity/csci440-fa21-project3-emjapo/EnviroMapping/ny.png?token=AM6SBYSU7WWAPCCFXYQMQGDBWGR2Q',
         },
         {
             target: gl.TEXTURE_CUBE_MAP_POSITIVE_Z,
-            url: 'pz.png',
+            url: 'https://raw.githubusercontent.com/WinthropUniversity/csci440-fa21-project3-emjapo/EnviroMapping/pz.png?token=AM6SBYXWWFHGSZ6UVJNAJADBWGSFQ',
         },
         {
             target: gl.TEXTURE_CUBE_MAP_NEGATIVE_Z,
-            url: 'nz.png', // need to change this once I push
+            url: 'https://raw.githubusercontent.com/WinthropUniversity/csci440-fa21-project3-emjapo/EnviroMapping/nz.png?token=AM6SBYTM47K3CQ2JHZNR4TDBWGR5Q', // need to change this once I push
         },
     ];
     faceInfos.forEach((faceInfo) => {
@@ -382,7 +382,7 @@ function SetEnvironmentMapping(gl) {
     gl.generateMipmap(gl.TEXTURE_CUBE_MAP);
     gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
 
-    var textureLocation = gl.getUniformLocation(program, "u_texture");
+    var textureLocation = gl.getUniformLocation(shaderProgram, "u_texture");
 
     gl.uniform1i(textureLocation, 0);
 }
@@ -406,7 +406,7 @@ async function main() {
     gShaderProgram = shaderProgram;
     gCanvas = canvas;
 
-    SetEnvironmentMapping(gl);
+    SetEnvironmentMapping(gl, shaderProgram);
 
 
     var zposition = parseFloat(document.getElementById("rotatez").value);
