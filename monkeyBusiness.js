@@ -166,15 +166,15 @@ function handleCameraPosition() {
     var rotateZ = parseFloat(document.getElementById("rotatez").value);
     var rotateY = parseFloat(document.getElementById("rotatey").value);
 
-    var eye = vec4(0.8, -0.6, -1.4, 1.0);
+    var eye = vec4(0.8, -0.6, -2.0, 1.0);
     //var eye = vec4(1.0, 0.0, 0.0, 0.0);
 
     var cs = Math.cos(rotateY * Math.PI / 180.0);
     var sn = Math.sin(rotateY * Math.PI / 180.0);
 
-    var Ry = mat4(cs, 0.0, sn, 0.0,
+    var Ry = mat4(cs, 0.0, -sn, 0.0,
         0.0, 1.0, 0.0, 0.0,
-        -sn, 0.0, cs, 0.0,
+        sn, 0.0, cs, 0.0,
         0.0, 0.0, 0.0, 1.0);
 
     var csZ = Math.cos(rotateZ * Math.PI / 180.0);
@@ -186,7 +186,7 @@ function handleCameraPosition() {
         0.0, 0.0, 0.0, 1.0);
 
 
-    //eye = mult(Rz, mult(Ry, eye));
+    eye = mult(Rz, mult(Ry, eye));
     console.log(eye);
     console.log(eye[0]);
 
@@ -195,7 +195,7 @@ function handleCameraPosition() {
         vec3(0, 1, 0)); // Which way is "up"
     
 
-    cameraMatrix = mult(Rz, mult(Ry, cameraMatrix)); // this might be the answer, I was thinking the rotations would just be on the eye vector, I could still be wrong though 
+    //cameraMatrix = mult(Rz, mult(Ry, cameraMatrix)); // this might be the answer, I was thinking the rotations would just be on the eye vector, I could still be wrong though 
 
     var cameraPosition = vec3(cameraMatrix[0][0], cameraMatrix[0][1], cameraMatrix[0][2]);
 
@@ -313,8 +313,8 @@ function render(monkeyList) {
 
     for (let monkeyIdx = 0; monkeyIdx < monkeyList.length; monkeyIdx++) {
         monkeyList[monkeyIdx].ResetMatrix();
-        monkeyList[0].Translate(0.5, 0.0, 0.4);
-        monkeyList[1].Translate(-2.4, -0.2, 0.4);
+        monkeyList[0].Translate(0.5, 0.0, 0.0);
+        monkeyList[1].Translate(-2.4, -0.2, 0.0);
         monkeyList[1].Scale(0.6, 0.6, 0.6);
         // monkeyList[1].RotateX(45);
         // monkeyList[1].RotateY(45);
@@ -416,7 +416,7 @@ async function main() {
     var cameraMatrix = lookAt(vec3(xpos, 0, zpos), // do affine transformation on the eye to move the camera
         vec3(0, 0, 0),  
         vec3(0, 1, 0)); 
-    var perspMatrix = GetPerspectiveProjectionMatrix(45, 0.05, 3.0);
+    var perspMatrix = GetPerspectiveProjectionMatrix(45, 0.05, 3.5);
     gl.uniformMatrix4fv(gl.getUniformLocation(shaderProgram, "uCameraMatrix"), false, flatten(cameraMatrix));
     gl.uniformMatrix4fv(gl.getUniformLocation(shaderProgram, "uProjectionMatrix"), false, flatten(perspMatrix));
     var lightPosition = vec4(1.0, 1.0, -1.0, 0.0);
