@@ -223,6 +223,7 @@ function setupShaders(gl) {
         "   vec3 L;" + //light stuff
         "   if (uLightPosition.w==0.0) L= normalize(uLightPosition.xyz);" +
         "   else L = normalize(uLightPosition.xyz - vertexPos);" +
+        "" +
         "   vec3 E = -normalize(vertexPos);" +
         "   vec3 H = normalize(L+E);" +
         "   vec3 N = normalize( (uModelMatrix * vec4(vNormal,0.0)).xyz );" +
@@ -230,6 +231,7 @@ function setupShaders(gl) {
         "   vec4 diffuse = max( dot(L,N), 0.0) * uDiffuseProduct;" +
         "   vec4 specular = pow( max( dot(N,H), 0.0), uShininess) * uSpecularProduct;" +
         "   if ( dot(L,N) < 0.0) specular = vec4(0.0, 0.0, 0.0, 1.0);" +
+        "" +
         "   fColor = ambient + diffuse + specular;" + //get color
         "   fColor.a = 1.0;" +
         "   fTexCoord = vTexCoord;" +
@@ -254,10 +256,10 @@ function setupShaders(gl) {
         "varying  vec2 fTexCoord;" +
         "uniform sampler2D texture;" +
         "void main() {" +
-        "    if (fTexCoord.x < 0.0)" +  
+        // "    if (fTexCoord.x < 0.0)" +  
         "      gl_FragColor = fColor;" +
-        "    else" +
-        "      gl_FragColor = fColor*texture2D( texture, fTexCoord );" + 
+        // "    else" +
+        // "      gl_FragColor = fColor*texture2D( texture, fTexCoord );" + 
         "}"
     var fragmentShader = gl.createShader(gl.FRAGMENT_SHADER);
     gl.shaderSource(fragmentShader, fragmentShaderCode);

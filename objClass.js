@@ -24,11 +24,11 @@ class FunkyMonkey {
         this.objData = SimpleObjParse(objFileContents);
         this.points = VerySimpleTriangleVertexExtraction(this.objData);
         //// try to extract the normals and the texture coordinates from the obj file
-        if (this.objData["normals"] !== 0) { // check for error
-            this.normals = this.objData["normals"];
-        } else {
+        // if (this.objData["normals"] !== 0) { // check for error
+        //     this.normals = this.objData["normals"];
+        // } else {
             this.normals = EstimateNormalsFromTriangles(this.points);
-        }
+        // }
 
         this.textureImage = null;
         this.textureID = null;
