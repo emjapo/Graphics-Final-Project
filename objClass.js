@@ -1,9 +1,9 @@
-class FunkyMonkey {
+class Friend {
     constructor(gl, shaderProgram, objFileContents) {
         this.gl = gl;
         this.shaderProgram = shaderProgram;
 
-        this.CreateMonkeyPoints(objFileContents);
+        this.CreateFriendPoints(objFileContents);
 
         // Set the transformation matrix. Not sure how this will combine with the work I have done yet
         this.matrixLoc = gl.getUniformLocation(shaderProgram, "uModelMatrix");
@@ -20,7 +20,7 @@ class FunkyMonkey {
     //**************************/
     // Get the points
     // maybe just having the function calls from the main file will work
-    CreateMonkeyPoints(objFileContents) {
+    CreateFriendPoints(objFileContents) {
         this.objData = SimpleObjParse(objFileContents);
         this.points = VerySimpleTriangleVertexExtraction(this.objData);
         //// try to extract the normals and the texture coordinates from the obj file
@@ -125,7 +125,7 @@ class FunkyMonkey {
     }
 
 
-    DrawMonkey() {
+    DrawFriend() {
         //position
         this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.vertexBufferID);
         var positionVar = this.gl.getAttribLocation(this.shaderProgram, "vPosition");

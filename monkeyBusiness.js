@@ -307,19 +307,19 @@ function setupShaders(gl) {
 
 
 // Another functions that will be refactored later but for now I am just concerned with if my obj file will be rendered
-function render(monkeyList) {
+function render(FriendList) {
     ggl.clear(ggl.COLOR_BUFFER_BIT | ggl.DEPTH_BUFFER_BIT);
 
 
-    for (let monkeyIdx = 0; monkeyIdx < monkeyList.length; monkeyIdx++) {
-        monkeyList[monkeyIdx].ResetMatrix();
-        monkeyList[0].Translate(0.5, 0.0, 0.0);
-        monkeyList[1].Translate(-2.4, -0.2, 0.0);
-        monkeyList[1].Scale(0.6, 0.6, 0.6);
-        // monkeyList[1].RotateX(45);
-        // monkeyList[1].RotateY(45);
-        //monkeyList[monkeyIdx].GetMatrix(rotationList[0], rotationList[1], rotationList[2]);
-        monkeyList[monkeyIdx].DrawMonkey();
+    for (let FriendIdx = 0; FriendIdx < FriendList.length; FriendIdx++) {
+        FriendList[FriendIdx].ResetMatrix();
+        FriendList[0].Translate(0.5, 0.0, 0.0);
+        FriendList[1].Translate(-2.4, -0.2, 0.0);
+        FriendList[1].Scale(0.6, 0.6, 0.6);
+        // FriendList[1].RotateX(45);
+        // FriendList[1].RotateY(45);
+        //FriendList[FriendIdx].GetMatrix(rotationList[0], rotationList[1], rotationList[2]);
+        FriendList[FriendIdx].DrawFriend();
     }
 }
 
@@ -430,19 +430,27 @@ async function main() {
 
     const bananaURL = "https://raw.githubusercontent.com/WinthropUniversity/csci440-fa21-project2-emjapo/main/banana3.obj?token=AM6SBYTUMCDSGGGOFHDZHG3BVRETS";
 
+    const chickenURL = "https://raw.githubusercontent.com/WinthropUniversity/csci440-fa21-project3-emjapo/main/birdStuff/chicken.obj?token=AM6SBYWJONFU73HW2PKFAFLBWPABA";
+
+    const birdURL = "https://raw.githubusercontent.com/WinthropUniversity/csci440-fa21-project3-emjapo/main/birdStuff/bird.obj?token=AM6SBYSW73GIXI6JELMWYFTBWPBIO";
+
     const objFileContents = await FetchWrapper(modelURL);
     const bananaFileContents = await FetchWrapper(bananaURL);
+    const chickenFileContents = await FetchWrapper(chickenURL);
+    const birdFileContents = await FetchWrapper(birdURL);
 
-    var CuriousGeorge = new FunkyMonkey(gl, shaderProgram, objFileContents);
-    var Banana = new FunkyMonkey(gl, shaderProgram, bananaFileContents);
+    var CuriousGeorge = new Friend(gl, shaderProgram, objFileContents);
+    var Banana = new Friend(gl, shaderProgram, bananaFileContents);
+    var MatildaRIP = new Friend(gl, shaderProgram, chickenFileContents);
+    //var birdBrain = new Friend(gl, shaderProgram, birdFileContents);
 
-    CuriousGeorge.SetMaterialProperties(vec4(1.0, 0.0, 0.0, 1.0), 10000.0);
-    var image = new Image();
-    image.crossOrigin = "anonymous";  // to avoid the CORS error ...
-    image.src = "https://raw.githubusercontent.com/WinthropUniversity/CSCI440-Examples/master/Week11/falltexture.png";
-    image.onload = function () {
-        CuriousGeorge.SetTextureProperties(image);
-    }
+    // CuriousGeorge.SetMaterialProperties(vec4(1.0, 0.0, 0.0, 1.0), 10000.0);
+    // var image = new Image();
+    // image.crossOrigin = "anonymous";  // to avoid the CORS error ...
+    // image.src = "https://raw.githubusercontent.com/WinthropUniversity/CSCI440-Examples/master/Week11/falltexture.png";
+    // image.onload = function () {
+    //     CuriousGeorge.SetTextureProperties(image);
+    // }
     // image.crossOrigin = "anonymous";  // to avoid the CORS error ...
     // image.src = "https://raw.githubusercontent.com/WinthropUniversity/CSCI440-Examples/master/Week11/falltexture.png";
     
@@ -457,10 +465,10 @@ async function main() {
     };
     document.getElementById("rotatey").oninput = function (event) {
         handleCameraPosition();
-        render([CuriousGeorge, Banana]);
+        render([CuriousGeorge, Banana, MatildaRIP]);
     };
 
-    render([CuriousGeorge, Banana]);
+    render([CuriousGeorge, Banana, MatildaRIP]);
 }
 
 window.onload = function init() {
