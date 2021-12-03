@@ -316,6 +316,9 @@ function render(FriendList) {
         FriendList[0].Translate(0.5, 0.0, 0.0);
         FriendList[1].Translate(-2.4, -0.2, 0.0);
         FriendList[1].Scale(0.6, 0.6, 0.6);
+        FriendList[2].Scale(0.01, 0.01, 0.01);
+        FriendList[2].RotateY(180);
+        FriendList[2].Translate(1.2, -1.0, 0.0);
         // FriendList[1].RotateX(45);
         // FriendList[1].RotateY(45);
         //FriendList[FriendIdx].GetMatrix(rotationList[0], rotationList[1], rotationList[2]);
@@ -430,7 +433,7 @@ async function main() {
 
     const bananaURL = "https://raw.githubusercontent.com/WinthropUniversity/csci440-fa21-project2-emjapo/main/banana3.obj?token=AM6SBYTUMCDSGGGOFHDZHG3BVRETS";
 
-    const chickenURL = "https://raw.githubusercontent.com/WinthropUniversity/csci440-fa21-project3-emjapo/main/birdStuff/chicken.obj?token=AM6SBYWJONFU73HW2PKFAFLBWPABA";
+    const chickenURL = "https://raw.githubusercontent.com/WinthropUniversity/csci440-fa21-project3-emjapo/main/birdStuff/Matilda.obj?token=AM6SBYQJ4PJSNOPP3WBOB33BWPEY6";
 
     const birdURL = "https://raw.githubusercontent.com/WinthropUniversity/csci440-fa21-project3-emjapo/main/birdStuff/bird.obj?token=AM6SBYSW73GIXI6JELMWYFTBWPBIO";
 
@@ -461,7 +464,7 @@ async function main() {
 
     document.getElementById("rotatez").oninput = function(event) {
         handleCameraPosition();
-        render([CuriousGeorge, Banana]);
+        render([CuriousGeorge, Banana, MatildaRIP]);
     };
     document.getElementById("rotatey").oninput = function (event) {
         handleCameraPosition();
