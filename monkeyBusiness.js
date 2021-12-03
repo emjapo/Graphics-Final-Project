@@ -166,15 +166,15 @@ function handleCameraPosition() {
     var rotateZ = parseFloat(document.getElementById("rotatez").value);
     var rotateY = parseFloat(document.getElementById("rotatey").value);
 
-    var eye = vec4(0.8, -0.6, -1.4, 1.0);
+    var eye = vec4(0.8, -0.6, -2.0, 1.0);
     //var eye = vec4(1.0, 0.0, 0.0, 0.0);
 
     var cs = Math.cos(rotateY * Math.PI / 180.0);
     var sn = Math.sin(rotateY * Math.PI / 180.0);
 
-    var Ry = mat4(cs, 0.0, sn, 0.0,
+    var Ry = mat4(cs, 0.0, -sn, 0.0,
         0.0, 1.0, 0.0, 0.0,
-        -sn, 0.0, cs, 0.0,
+        sn, 0.0, cs, 0.0,
         0.0, 0.0, 0.0, 1.0);
 
     var csZ = Math.cos(rotateZ * Math.PI / 180.0);
@@ -186,7 +186,7 @@ function handleCameraPosition() {
         0.0, 0.0, 0.0, 1.0);
 
 
-    //eye = mult(Rz, mult(Ry, eye));
+    eye = mult(Rz, mult(Ry, eye));
     console.log(eye);
     console.log(eye[0]);
 
@@ -195,7 +195,13 @@ function handleCameraPosition() {
         vec3(0, 1, 0)); // Which way is "up"
     
 
-    cameraMatrix = mult(Rz, mult(Ry, cameraMatrix)); // this might be the answer, I was thinking the rotations would just be on the eye vector, I could still be wrong though 
+    //cameraMatrix = mult(Rz, mult(Ry, cameraMatrix)); // this might be the answer, I was thinking the rotations would just be on the eye vector, I could still be wrong though 
+
+    var cameraPosition = vec3(cameraMatrix[0][0], cameraMatrix[0][1], cameraMatrix[0][2]);
+
+    var worldCameraPositionLocation = ggl.getUniformLocation(gShaderProgram, "u_worldCameraPosition");
+    ggl.uniform3fv(worldCameraPositionLocation, cameraPosition);
+
     ggl.uniformMatrix4fv(ggl.getUniformLocation(gShaderProgram, "uCameraMatrix"), false, flatten(cameraMatrix));
 
     //render();
@@ -206,6 +212,8 @@ function handleCameraPosition() {
 // Set up the shaders, this will almost definitely need to be changed later
 function setupShaders(gl) {
     var vertexShaderCode = "attribute vec4 vPosition;" +
+        "varying vec3 v_worldPosition;" +
+        "varying vec3 v_worldNormal;" +
         "attribute vec3 vNormal;" +
         "attribute vec2 vTexCoord;" +
         "varying vec4 fColor;" +
@@ -240,6 +248,8 @@ function setupShaders(gl) {
         "   gl_Position.y = gl_Position.y / gl_Position.w;" +
         "   gl_Position.z = gl_Position.z / gl_Position.w;" +
         "   gl_Position.w = 1.0;" +
+        "   v_worldPosition = vec3(gl_Position.x, gl_Position.y, gl_Position.z);" +
+        "   v_worldNormal = vNormal;" +
         "}";
     var vertexShader = gl.createShader(gl.VERTEX_SHADER);
     gl.shaderSource(vertexShader, vertexShaderCode);
@@ -252,15 +262,25 @@ function setupShaders(gl) {
     }
 
     var fragmentShaderCode = "precision mediump float;" +
-        "varying vec4 fColor;" +
-        "varying  vec2 fTexCoord;" +
-        "uniform sampler2D texture;" +
+    "varying vec3 v_worldPosition;" +
+    "varying vec3 v_worldNormal;"+
+    "uniform samplerCube u_texture;" +
+    "uniform vec3 u_worldCameraPosition;" +
         "void main() {" +
-        // "    if (fTexCoord.x < 0.0)" +  
-        "      gl_FragColor = fColor;" +
-        // "    else" +
-        // "      gl_FragColor = fColor*texture2D( texture, fTexCoord );" + 
-        "}"
+        "   vec3 worldNormal = normalize(v_worldNormal);"+
+        "    vec3 eyeToSurfaceDir = normalize(v_worldPosition - u_worldCameraPosition);" +
+        "    vec3 direction = reflect(eyeToSurfaceDir, worldNormal);"+
+        "    gl_FragColor = textureCube(u_texture, direction);" +
+        "}";
+        // "varying vec4 fColor;" +
+        // "varying  vec2 fTexCoord;" +
+        // "uniform sampler2D texture;" +
+        // "void main() {" +
+        // // "    if (fTexCoord.x < 0.0)" +  
+        // "      gl_FragColor = fColor;" +
+        // // "    else" +
+        // // "      gl_FragColor = fColor*texture2D( texture, fTexCoord );" + 
+        // "}"
     var fragmentShader = gl.createShader(gl.FRAGMENT_SHADER);
     gl.shaderSource(fragmentShader, fragmentShaderCode);
     gl.compileShader(fragmentShader);
@@ -293,14 +313,78 @@ function render(monkeyList) {
 
     for (let monkeyIdx = 0; monkeyIdx < monkeyList.length; monkeyIdx++) {
         monkeyList[monkeyIdx].ResetMatrix();
-        monkeyList[0].Translate(0.5, 0.0, 0.4);
-        monkeyList[1].Translate(-2.4, -0.2, 0.4);
+        monkeyList[0].Translate(0.5, 0.0, 0.0);
+        monkeyList[1].Translate(-2.4, -0.2, 0.0);
         monkeyList[1].Scale(0.6, 0.6, 0.6);
         // monkeyList[1].RotateX(45);
         // monkeyList[1].RotateY(45);
         //monkeyList[monkeyIdx].GetMatrix(rotationList[0], rotationList[1], rotationList[2]);
         monkeyList[monkeyIdx].DrawMonkey();
     }
+}
+
+function SetEnvironmentMapping(gl, shaderProgram) {
+    // Create a texture.
+    var texture = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_CUBE_MAP, texture);
+
+    const faceInfos = [
+        {
+            target: gl.TEXTURE_CUBE_MAP_POSITIVE_X,
+            url: 'https://raw.githubusercontent.com/WinthropUniversity/csci440-fa21-project3-emjapo/EnviroMapping/px.png?token=AM6SBYSYQTF4IM5QRL3DPIDBWGSAI',
+        },
+        {
+            target: gl.TEXTURE_CUBE_MAP_NEGATIVE_X,
+            url: 'https://raw.githubusercontent.com/WinthropUniversity/csci440-fa21-project3-emjapo/EnviroMapping/nx.png?token=AM6SBYXOGKRLL3DJ5ZGX7YDBWGRDS',
+        },
+        {
+            target: gl.TEXTURE_CUBE_MAP_POSITIVE_Y,
+            url: 'https://raw.githubusercontent.com/WinthropUniversity/csci440-fa21-project3-emjapo/EnviroMapping/py.png?token=AM6SBYRGSFU3ZH7CBY5IJR3BWGSCQ',
+        },
+        {
+            target: gl.TEXTURE_CUBE_MAP_NEGATIVE_Y,
+            url: 'https://raw.githubusercontent.com/WinthropUniversity/csci440-fa21-project3-emjapo/EnviroMapping/ny.png?token=AM6SBYSU7WWAPCCFXYQMQGDBWGR2Q',
+        },
+        {
+            target: gl.TEXTURE_CUBE_MAP_POSITIVE_Z,
+            url: 'https://raw.githubusercontent.com/WinthropUniversity/csci440-fa21-project3-emjapo/EnviroMapping/pz.png?token=AM6SBYXWWFHGSZ6UVJNAJADBWGSFQ',
+        },
+        {
+            target: gl.TEXTURE_CUBE_MAP_NEGATIVE_Z,
+            url: 'https://raw.githubusercontent.com/WinthropUniversity/csci440-fa21-project3-emjapo/EnviroMapping/nz.png?token=AM6SBYTM47K3CQ2JHZNR4TDBWGR5Q', // need to change this once I push
+        },
+    ];
+    faceInfos.forEach((faceInfo) => {
+        const { target, url } = faceInfo;
+
+        // Upload the canvas to the cubemap face.
+        const level = 0;
+        const internalFormat = gl.RGBA;
+        const width = 512;
+        const height = 512;
+        const format = gl.RGBA;
+        const type = gl.UNSIGNED_BYTE;
+
+        // setup each face so it's immediately renderable
+        gl.texImage2D(target, level, internalFormat, width, height, 0, format, type, null);
+
+        // Asynchronously load an image
+        const image = new Image();
+        image.crossOrigin = "anonymous";
+        image.src = url;
+        image.addEventListener('load', function () {
+            // Now that the image has loaded upload it to the texture.
+            gl.bindTexture(gl.TEXTURE_CUBE_MAP, texture);
+            gl.texImage2D(target, level, internalFormat, format, type, image);
+            gl.generateMipmap(gl.TEXTURE_CUBE_MAP);
+        });
+    });
+    gl.generateMipmap(gl.TEXTURE_CUBE_MAP);
+    gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
+
+    var textureLocation = gl.getUniformLocation(shaderProgram, "u_texture");
+
+    gl.uniform1i(textureLocation, 0);
 }
 
 // main function that invokes all of the other functions
@@ -313,14 +397,18 @@ async function main() {
     
 
     gl.viewport(0, 0, canvas.clientWidth, canvas.height);
-    gl.clearColor(1.0, 1.0, 1.0, 1.0);
+    //gl.clearColor(1.0, 1.0, 1.0, 1.0); // this probably isn't the best practice to get rid of this but it was the only way to get the picture
     gl.enable(gl.DEPTH_TEST);
+
+    
 
     var shaderProgram = setupShaders(gl);
 
     ggl = gl;
     gShaderProgram = shaderProgram;
     gCanvas = canvas;
+
+    SetEnvironmentMapping(gl, shaderProgram);
 
 
     var zposition = parseFloat(document.getElementById("rotatez").value);
@@ -330,7 +418,7 @@ async function main() {
     var cameraMatrix = lookAt(vec3(xpos, 0, zpos), // do affine transformation on the eye to move the camera
         vec3(0, 0, 0),  
         vec3(0, 1, 0)); 
-    var perspMatrix = GetPerspectiveProjectionMatrix(45, 0.05, 3.0);
+    var perspMatrix = GetPerspectiveProjectionMatrix(45, 0.05, 3.5);
     gl.uniformMatrix4fv(gl.getUniformLocation(shaderProgram, "uCameraMatrix"), false, flatten(cameraMatrix));
     gl.uniformMatrix4fv(gl.getUniformLocation(shaderProgram, "uProjectionMatrix"), false, flatten(perspMatrix));
     var lightPosition = vec4(1.0, 1.0, -1.0, 0.0);
