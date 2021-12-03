@@ -397,8 +397,10 @@ async function main() {
     
 
     gl.viewport(0, 0, canvas.clientWidth, canvas.height);
-    gl.clearColor(1.0, 1.0, 1.0, 1.0);
+    //gl.clearColor(1.0, 1.0, 1.0, 1.0); // this probably isn't the best practice to get rid of this but it was the only way to get the picture
     gl.enable(gl.DEPTH_TEST);
+
+    
 
     var shaderProgram = setupShaders(gl);
 
