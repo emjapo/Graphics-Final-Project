@@ -166,7 +166,7 @@ function handleCameraPosition() {
     var rotateZ = parseFloat(document.getElementById("rotatez").value);
     var rotateY = parseFloat(document.getElementById("rotatey").value);
 
-    var eye = vec4(0.8, -0.6, -2.0, 1.0);
+    var eye = vec4(0.1, 0.2, -2.0, 1.0);
     //var eye = vec4(1.0, 0.0, 0.0, 0.0);
 
     var cs = Math.cos(rotateY * Math.PI / 180.0);
@@ -187,8 +187,6 @@ function handleCameraPosition() {
 
 
     eye = mult(Rz, mult(Ry, eye));
-    console.log(eye);
-    console.log(eye[0]);
 
     var cameraMatrix = lookAt(vec3(eye[0], eye[1], eye[2]),  // Location of camera 
         vec3(0, 0, 0),  // Where camera is looking
@@ -223,6 +221,7 @@ function setupShaders(gl) {
         "uniform vec4 uSpecularProduct;" +
         "uniform vec4 uLightPosition;" +
         "uniform float uShininess;" +
+        // "uniform float uMirror;" +
         "uniform mat4 uModelMatrix;" + //matrices
         "uniform mat4 uCameraMatrix;" +
         "uniform mat4 uProjectionMatrix;" +
@@ -262,15 +261,21 @@ function setupShaders(gl) {
     }
 
     var fragmentShaderCode = "precision mediump float;" +
+    "varying vec4 fColor;" +
     "varying vec3 v_worldPosition;" +
     "varying vec3 v_worldNormal;"+
     "uniform samplerCube u_texture;" +
+    "uniform float uMirror;" +
     "uniform vec3 u_worldCameraPosition;" +
         "void main() {" +
-        "   vec3 worldNormal = normalize(v_worldNormal);"+
-        "    vec3 eyeToSurfaceDir = normalize(v_worldPosition - u_worldCameraPosition);" +
-        "    vec3 direction = reflect(eyeToSurfaceDir, worldNormal);"+
-        "    gl_FragColor = textureCube(u_texture, direction);" +
+        "   if(uMirror==1.0){" +
+        "       vec3 worldNormal = normalize(v_worldNormal);"+
+        "       vec3 eyeToSurfaceDir = normalize(v_worldPosition - u_worldCameraPosition);" +
+        "       vec3 direction = reflect(eyeToSurfaceDir, worldNormal);"+
+        "       gl_FragColor = textureCube(u_texture, direction);" +
+        "   } else {"+
+        "    gl_FragColor = fColor;" +
+        "}" +
         "}";
         // "varying vec4 fColor;" +
         // "varying  vec2 fTexCoord;" +
@@ -313,10 +318,10 @@ function render(FriendList) {
 
     for (let FriendIdx = 0; FriendIdx < FriendList.length; FriendIdx++) {
         FriendList[FriendIdx].ResetMatrix();
-        FriendList[0].Translate(0.5, 0.0, 0.0);
+        FriendList[0].Translate(0.0, 0.0, 0.0);
         FriendList[1].Translate(-2.4, -0.2, 0.0);
         FriendList[1].Scale(0.6, 0.6, 0.6);
-        FriendList[2].Scale(0.01, 0.01, 0.01);
+        FriendList[2].Scale(0.02, 0.02, 0.02);
         FriendList[2].RotateY(180);
         FriendList[2].Translate(1.2, -1.0, 0.0);
         // FriendList[1].RotateX(45);
@@ -435,19 +440,21 @@ async function main() {
 
     const chickenURL = "https://raw.githubusercontent.com/WinthropUniversity/csci440-fa21-project3-emjapo/main/birdStuff/Matilda.obj?token=AM6SBYQJ4PJSNOPP3WBOB33BWPEY6";
 
-    const birdURL = "https://raw.githubusercontent.com/WinthropUniversity/csci440-fa21-project3-emjapo/main/birdStuff/bird.obj?token=AM6SBYSW73GIXI6JELMWYFTBWPBIO";
+    //const birdURL = "https://raw.githubusercontent.com/WinthropUniversity/csci440-fa21-project3-emjapo/main/birdStuff/bird.obj?token=AM6SBYSW73GIXI6JELMWYFTBWPBIO";
 
     const objFileContents = await FetchWrapper(modelURL);
     const bananaFileContents = await FetchWrapper(bananaURL);
     const chickenFileContents = await FetchWrapper(chickenURL);
-    const birdFileContents = await FetchWrapper(birdURL);
+    //const birdFileContents = await FetchWrapper(birdURL);
 
     var CuriousGeorge = new Friend(gl, shaderProgram, objFileContents);
     var Banana = new Friend(gl, shaderProgram, bananaFileContents);
     var MatildaRIP = new Friend(gl, shaderProgram, chickenFileContents);
     //var birdBrain = new Friend(gl, shaderProgram, birdFileContents);
 
-    // CuriousGeorge.SetMaterialProperties(vec4(1.0, 0.0, 0.0, 1.0), 10000.0);
+    CuriousGeorge.SetMaterialProperties(vec4(1.0, 0.0, 0.0, 1.0), 10000.0, 1.0);
+    Banana.SetMaterialProperties(vec4(1.0, 1.0, 0.0, 1.0), 10000.0, 0.0);
+    
     // var image = new Image();
     // image.crossOrigin = "anonymous";  // to avoid the CORS error ...
     // image.src = "https://raw.githubusercontent.com/WinthropUniversity/CSCI440-Examples/master/Week11/falltexture.png";
@@ -472,6 +479,7 @@ async function main() {
     };
 
     render([CuriousGeorge, Banana, MatildaRIP]);
+    //window.requestAnimFrame(function () { MatildaRIP.Translate
 }
 
 window.onload = function init() {

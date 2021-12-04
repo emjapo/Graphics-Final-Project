@@ -41,8 +41,8 @@ class Friend {
 
 
         //set up lighting
-        this.SetMaterialProperties(vec4(1.0, 0.75, 0.25, 1.0), 100.0);
-        this.SetLightingProperties(vec4(0.25, 0.25, 0.25, 1.0),   
+        this.SetMaterialProperties(vec4(1.0, 0.75, 0.25, 1.0), 100.0, 1.0);
+        this.SetLightingProperties(vec4(0.5, 0.5, 0.5, 1.0),   
                                    vec4(1.0, 1.0, 1.0, 1.0),  
                                    vec4(1.0, 1.0, 1.0, 1.0)); 
 
@@ -80,11 +80,12 @@ class Friend {
         this.gl.enableVertexAttribArray(texVar);
     }
 
-    SetMaterialProperties(materialColor, materialShininess) {
+    SetMaterialProperties(materialColor, materialShininess, mirror) {
         this.ambientMaterial = materialColor
         this.diffuseMaterial = materialColor
         this.specularMaterial = materialColor;
         this.shininess = materialShininess;
+        this.mirror = mirror;
     }
 
     SetLightingProperties(ambientLightColor, diffuseLightColor, specularLightColor) {
@@ -152,6 +153,9 @@ class Friend {
         this.gl.uniform4fv(this.gl.getUniformLocation(this.shaderProgram, "uSpecularProduct"), flatten(specularProduct));
 
         this.gl.uniform1f(this.gl.getUniformLocation(this.shaderProgram, "uShininess"), this.shininess);
+
+        // to designate if it will use environment mapping or not
+        this.gl.uniform1f(this.gl.getUniformLocation(this.shaderProgram, "uMirror"), this.mirror);
 
 
         //transformation matrix
