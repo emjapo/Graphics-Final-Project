@@ -288,15 +288,7 @@ function setupShaders(gl) {
         "    gl_FragColor = fColor;" +
         "}" +
         "}";
-        // "varying vec4 fColor;" +
-        // "varying  vec2 fTexCoord;" +
-        // "uniform sampler2D texture;" +
-        // "void main() {" +
-        // // "    if (fTexCoord.x < 0.0)" +  
-        // "      gl_FragColor = fColor;" +
-        // // "    else" +
-        // // "      gl_FragColor = fColor*texture2D( texture, fTexCoord );" + 
-        // "}"
+   
     var fragmentShader = gl.createShader(gl.FRAGMENT_SHADER);
     gl.shaderSource(fragmentShader, fragmentShaderCode);
     gl.compileShader(fragmentShader);
@@ -351,7 +343,10 @@ function render(FriendList, theta) {
         FriendList[FriendIdx].DrawFriend();
     }
 
-    window.requestAnimationFrame(function () { render(FriendList, theta) });
+    //setTimeout(function () {
+        window.requestAnimationFrame(function () { render(FriendList, theta) });
+    //}, 1000 / 30);
+
 }
 
 function SetEnvironmentMapping(gl, shaderProgram) {
@@ -463,30 +458,18 @@ async function main() {
 
     const chickenURL = "https://raw.githubusercontent.com/WinthropUniversity/csci440-fa21-project3-emjapo/main/birdStuff/Matilda.obj?token=AM6SBYQJ4PJSNOPP3WBOB33BWPEY6";
 
-    //const birdURL = "https://raw.githubusercontent.com/WinthropUniversity/csci440-fa21-project3-emjapo/main/birdStuff/bird.obj?token=AM6SBYSW73GIXI6JELMWYFTBWPBIO";
 
     const objFileContents = await FetchWrapper(modelURL);
     const bananaFileContents = await FetchWrapper(bananaURL);
     const chickenFileContents = await FetchWrapper(chickenURL);
-    //const birdFileContents = await FetchWrapper(birdURL);
 
     var CuriousGeorge = new Friend(gl, shaderProgram, objFileContents);
     var Banana = new Friend(gl, shaderProgram, bananaFileContents);
     var MatildaRIP = new Friend(gl, shaderProgram, chickenFileContents);
-    //var birdBrain = new Friend(gl, shaderProgram, birdFileContents);
 
     CuriousGeorge.SetMaterialProperties(vec4(1.0, 0.0, 0.0, 1.0), 10000.0, 1.0);
     Banana.SetMaterialProperties(vec4(1.0, 0.9, 0.0, 1.0), 10000.0, 0.0);
     MatildaRIP.SetMotion(1.0);
-    
-    // var image = new Image();
-    // image.crossOrigin = "anonymous";  // to avoid the CORS error ...
-    // image.src = "https://raw.githubusercontent.com/WinthropUniversity/CSCI440-Examples/master/Week11/falltexture.png";
-    // image.onload = function () {
-    //     CuriousGeorge.SetTextureProperties(image);
-    // }
-    // image.crossOrigin = "anonymous";  // to avoid the CORS error ...
-    // image.src = "https://raw.githubusercontent.com/WinthropUniversity/CSCI440-Examples/master/Week11/falltexture.png";
     
 
     // get slider values (not sure this is the best location)
@@ -505,7 +488,6 @@ async function main() {
     };
 
     render([CuriousGeorge, Banana, MatildaRIP], theta);
-    //window.requestAnimFrame(function () { MatildaRIP.Translate
 }
 
 window.onload = function init() {
