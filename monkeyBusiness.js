@@ -10,13 +10,16 @@ async function FetchWrapper(objURL) {
 }
 
 // Borrowed from Dr.Weigand's code
-// The global objects list to cheat for rendering
-var gObjectsList = [];
 
 // The global gl and shader hooks to cheat for rendering
 var ggl = null;
 var gShaderProgram = null;
 var gCanvas = null;
+// for rotation
+var thetaLoc;
+var direction = 1;
+var rotation = (40 * Math.PI) / 180;
+
 
 
 // I kept all of the the parsing fucntions in the main file becuase thats what I did on project 2
@@ -167,7 +170,6 @@ function handleCameraPosition() {
     var rotateY = parseFloat(document.getElementById("rotatey").value);
 
     var eye = vec4(0.1, 0.2, -2.0, 1.0);
-    //var eye = vec4(1.0, 0.0, 0.0, 0.0);
 
     var cs = Math.cos(rotateY * Math.PI / 180.0);
     var sn = Math.sin(rotateY * Math.PI / 180.0);
@@ -193,7 +195,7 @@ function handleCameraPosition() {
         vec3(0, 1, 0)); // Which way is "up"
     
 
-    //cameraMatrix = mult(Rz, mult(Ry, cameraMatrix)); // this might be the answer, I was thinking the rotations would just be on the eye vector, I could still be wrong though 
+ 
 
     var cameraPosition = vec3(cameraMatrix[0][0], cameraMatrix[0][1], cameraMatrix[0][2]);
 
@@ -210,6 +212,8 @@ function handleCameraPosition() {
 // Set up the shaders, this will almost definitely need to be changed later
 function setupShaders(gl) {
     var vertexShaderCode = "attribute vec4 vPosition;" +
+        "uniform float uTheta;" +
+        "uniform float uMotion;" +
         "varying vec3 v_worldPosition;" +
         "varying vec3 v_worldNormal;" +
         "attribute vec3 vNormal;" +
@@ -221,7 +225,6 @@ function setupShaders(gl) {
         "uniform vec4 uSpecularProduct;" +
         "uniform vec4 uLightPosition;" +
         "uniform float uShininess;" +
-        // "uniform float uMirror;" +
         "uniform mat4 uModelMatrix;" + //matrices
         "uniform mat4 uCameraMatrix;" +
         "uniform mat4 uProjectionMatrix;" +
@@ -247,6 +250,10 @@ function setupShaders(gl) {
         "   gl_Position.y = gl_Position.y / gl_Position.w;" +
         "   gl_Position.z = gl_Position.z / gl_Position.w;" +
         "   gl_Position.w = 1.0;" +
+        "   if (uMotion==1.0){" +
+        "    gl_Position.x = -sin(uTheta) * gl_Position.x + cos(uTheta) * gl_Position.y;" +
+        "    gl_Position.y =  sin(uTheta) * gl_Position.y + cos(uTheta) * gl_Position.x;" +
+        "   }" +
         "   v_worldPosition = vec3(gl_Position.x, gl_Position.y, gl_Position.z);" +
         "   v_worldNormal = vNormal;" +
         "}";
@@ -307,14 +314,18 @@ function setupShaders(gl) {
         console.log("Could not compile WebGL program: " + info);
     }
 
+    thetaLoc = gl.getUniformLocation(shaderProgram, "uTheta");
+
     return shaderProgram;
 }
 
 
 // Another functions that will be refactored later but for now I am just concerned with if my obj file will be rendered
-function render(FriendList) {
+function render(FriendList, theta) {
     ggl.clear(ggl.COLOR_BUFFER_BIT | ggl.DEPTH_BUFFER_BIT);
 
+    theta += rotation * 0.01;
+    ggl.uniform1f(thetaLoc, theta);
 
     for (let FriendIdx = 0; FriendIdx < FriendList.length; FriendIdx++) {
         FriendList[FriendIdx].ResetMatrix();
@@ -324,11 +335,10 @@ function render(FriendList) {
         FriendList[2].Scale(0.02, 0.02, 0.02);
         FriendList[2].RotateY(180);
         FriendList[2].Translate(1.2, -1.0, 0.0);
-        // FriendList[1].RotateX(45);
-        // FriendList[1].RotateY(45);
-        //FriendList[FriendIdx].GetMatrix(rotationList[0], rotationList[1], rotationList[2]);
         FriendList[FriendIdx].DrawFriend();
     }
+
+    window.requestAnimFrame(function () { render(FriendList, theta) });
 }
 
 function SetEnvironmentMapping(gl, shaderProgram) {
@@ -434,9 +444,9 @@ async function main() {
 
 
     //possibly will cause issues if my path isn't right 
-    const modelURL = "https://raw.githubusercontent.com/WinthropUniversity/csci440-fa21-project2-emjapo/main/Monkey.obj?token=AM6SBYRUDDXFW22K7RDYYWTBVREWG"; // this changes but I don't know what caused it to change so hopefully it doesn't happen again
+    const modelURL = "https://raw.githubusercontent.com/WinthropUniversity/csci440-fa21-project3-emjapo/main/Monkey.obj?token=AM6SBYWEZKLBWPDGLIOVBCDBW23DA"; // this changes but I don't know what caused it to change so hopefully it doesn't happen again
 
-    const bananaURL = "https://raw.githubusercontent.com/WinthropUniversity/csci440-fa21-project2-emjapo/main/banana3.obj?token=AM6SBYTUMCDSGGGOFHDZHG3BVRETS";
+    const bananaURL = "https://raw.githubusercontent.com/WinthropUniversity/csci440-fa21-project3-emjapo/main/banana3.obj?token=AM6SBYXBW55KNTNAPTCOAFDBW23F4";
 
     const chickenURL = "https://raw.githubusercontent.com/WinthropUniversity/csci440-fa21-project3-emjapo/main/birdStuff/Matilda.obj?token=AM6SBYQJ4PJSNOPP3WBOB33BWPEY6";
 
@@ -453,7 +463,8 @@ async function main() {
     //var birdBrain = new Friend(gl, shaderProgram, birdFileContents);
 
     CuriousGeorge.SetMaterialProperties(vec4(1.0, 0.0, 0.0, 1.0), 10000.0, 1.0);
-    Banana.SetMaterialProperties(vec4(1.0, 1.0, 0.0, 1.0), 10000.0, 0.0);
+    Banana.SetMaterialProperties(vec4(1.0, 0.9, 0.0, 1.0), 10000.0, 0.0);
+    MatildaRIP.SetMotion(1.0);
     
     // var image = new Image();
     // image.crossOrigin = "anonymous";  // to avoid the CORS error ...
@@ -468,17 +479,18 @@ async function main() {
     // get slider values (not sure this is the best location)
 
     handleCameraPosition();
+    var theta = 0.0;
 
     document.getElementById("rotatez").oninput = function(event) {
         handleCameraPosition();
-        render([CuriousGeorge, Banana, MatildaRIP]);
+        render([CuriousGeorge, Banana, MatildaRIP], theta);
     };
     document.getElementById("rotatey").oninput = function (event) {
         handleCameraPosition();
-        render([CuriousGeorge, Banana, MatildaRIP]);
+        render([CuriousGeorge, Banana, MatildaRIP], theta);
     };
 
-    render([CuriousGeorge, Banana, MatildaRIP]);
+    render([CuriousGeorge, Banana, MatildaRIP], theta);
     //window.requestAnimFrame(function () { MatildaRIP.Translate
 }
 
