@@ -351,7 +351,7 @@ function render(FriendList, theta) {
         FriendList[FriendIdx].DrawFriend();
     }
 
-    window.requestAnimFrame(function () { render(FriendList, theta) });
+    window.requestAnimationFrame(function () { render(FriendList, theta) });
 }
 
 function SetEnvironmentMapping(gl, shaderProgram) {
