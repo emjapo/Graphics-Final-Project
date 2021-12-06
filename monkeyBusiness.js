@@ -17,8 +17,8 @@ var gShaderProgram = null;
 var gCanvas = null;
 // for rotation
 var thetaLoc;
-var direction = 1;
-var rotation = (40 * Math.PI) / 180;
+var direction = 1.0;
+var rotation = (180 * Math.PI) / 180;
 
 
 
@@ -212,7 +212,7 @@ function handleCameraPosition() {
 // Set up the shaders, this will almost definitely need to be changed later
 function setupShaders(gl) {
     var vertexShaderCode = "attribute vec4 vPosition;" +
-        "uniform float uTheta;" +
+        "uniform mat4 uTheta;" +
         "uniform float uMotion;" +
         "varying vec3 v_worldPosition;" +
         "varying vec3 v_worldNormal;" +
@@ -245,14 +245,18 @@ function setupShaders(gl) {
         "   fColor = ambient + diffuse + specular;" + //get color
         "   fColor.a = 1.0;" +
         "   fTexCoord = vTexCoord;" +
-        "   gl_Position = uProjectionMatrix * uCameraMatrix * uModelMatrix * vPosition;" + // set position with perspectives
-        "   gl_Position.x = gl_Position.x / gl_Position.w;" +
-        "   gl_Position.y = gl_Position.y / gl_Position.w;" +
-        "   gl_Position.z = gl_Position.z / gl_Position.w;" +
-        "   gl_Position.w = 1.0;" +
         "   if (uMotion==1.0){" +
-        "    gl_Position.x = -sin(uTheta) * gl_Position.x + cos(uTheta) * gl_Position.y;" +
-        "    gl_Position.y =  sin(uTheta) * gl_Position.y + cos(uTheta) * gl_Position.x;" +
+        "       gl_Position = uProjectionMatrix * uCameraMatrix * uModelMatrix * uTheta * vPosition;" + // set position with perspectives
+        "       gl_Position.x = gl_Position.x / gl_Position.w;" +
+        "       gl_Position.y = gl_Position.y / gl_Position.w;" +
+        "       gl_Position.z = gl_Position.z / gl_Position.w;" +
+        "       gl_Position.w = 1.0;" +
+        "   } else {" +
+        "       gl_Position = uProjectionMatrix * uCameraMatrix * uModelMatrix * vPosition; " + // set position with perspectives
+        "       gl_Position.x = gl_Position.x / gl_Position.w;" +
+        "       gl_Position.y = gl_Position.y / gl_Position.w;" +
+        "       gl_Position.z = gl_Position.z / gl_Position.w;" +
+        "       gl_Position.w = 1.0;" +
         "   }" +
         "   v_worldPosition = vec3(gl_Position.x, gl_Position.y, gl_Position.z);" +
         "   v_worldNormal = vNormal;" +
@@ -314,7 +318,7 @@ function setupShaders(gl) {
         console.log("Could not compile WebGL program: " + info);
     }
 
-    thetaLoc = gl.getUniformLocation(shaderProgram, "uTheta");
+    thetaLoc = gl.getUniformLocation(shaderProgram, "uTheta"); //nedd to change for matrix
 
     return shaderProgram;
 }
@@ -325,7 +329,16 @@ function render(FriendList, theta) {
     ggl.clear(ggl.COLOR_BUFFER_BIT | ggl.DEPTH_BUFFER_BIT);
 
     theta += rotation * 0.01;
-    ggl.uniform1f(thetaLoc, theta);
+
+    var cs = Math.cos(theta);
+    var sn = Math.sin(theta);
+    
+    var thetaMatrix = mat4(cs, 0.0, -sn, 0.0,
+        0.0, 1.0, 0.0, 0.0,
+        sn, 0.0, cs, 0.0,
+        0.0, 0.0, 0.0, 1.0);
+
+    ggl.uniformMatrix4fv(thetaLoc, false, flatten(thetaMatrix)); // need to change this to a matrix
 
     for (let FriendIdx = 0; FriendIdx < FriendList.length; FriendIdx++) {
         FriendList[FriendIdx].ResetMatrix();
@@ -334,7 +347,7 @@ function render(FriendList, theta) {
         FriendList[1].Scale(0.6, 0.6, 0.6);
         FriendList[2].Scale(0.02, 0.02, 0.02);
         FriendList[2].RotateY(180);
-        FriendList[2].Translate(1.2, -1.0, 0.0);
+        FriendList[2].Translate(1.5, -1.0, 0.0);
         FriendList[FriendIdx].DrawFriend();
     }
 
@@ -479,6 +492,7 @@ async function main() {
     // get slider values (not sure this is the best location)
 
     handleCameraPosition();
+    
     var theta = 0.0;
 
     document.getElementById("rotatez").oninput = function(event) {
